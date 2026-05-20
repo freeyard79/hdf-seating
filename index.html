@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>HDF 2025 · VIP 자리배치</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --navy:#1a2035;--navy2:#232b42;--navy3:#2d3756;
+  --cream:#f5f2ec;--cream2:#ede9e0;
+  --violet:#6c5ce7;--violet2:#5a4bd1;
+  --amber:#e17d2c;--teal:#00b894;--rose:#e84393;
+  --gray:#8892a4;--gray2:#adb5c6;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --c-vip:#a29bfe;--c-vip-bg:rgba(162,155,254,0.15);
+  --c-sp:#fdcb6e; --c-sp-bg:rgba(253,203,110,0.15);
+  --c-org:#74b9ff;--c-org-bg:rgba(116,185,255,0.15);
+  --c-chk-bg:rgba(0,184,148,0.15);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--navy);color:var(--cream);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+#conn-bar{display:flex;align-items:center;gap:8px;padding:5px 1rem;font-size:.76rem;border-bottom:1px solid var(--border);background:var(--navy);flex-shrink:0}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--gray);flex-shrink:0;transition:background .3s}
+.conn-dot.live{background:var(--teal);box-shadow:0 0 0 3px rgba(0,184,148,0.2)}
+.conn-dot.err{background:var(--rose)}
+#conn-label{color:var(--gray2)}
+#conn-label.live{color:var(--teal)}
+.conn-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.badge-live{padding:2px 8px;border-radius:20px;background:rgba(0,184,148,0.15);color:var(--teal);font-size:.68rem;font-weight:600;display:none}
+.badge-live.show{display:block}
+.legend{display:flex;gap:10px;flex-wrap:wrap;padding:.35rem .8rem;border-bottom:1px solid var(--border);background:var(--navy2);flex-shrink:0;align-items:center}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:.67rem;color:var(--gray2)}
+.legend-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.legend-hint{margin-left:auto;font-size:.64rem;color:var(--gray)}
+#tab-bar{display:flex;border-bottom:1px solid var(--border);background:var(--navy);flex-shrink:0}
+.tab{flex:1;padding:.6rem .3rem;text-align:center;font-size:.76rem;font-weight:500;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+.tab svg{width:14px;height:14px;stroke-width:1.8;flex-shrink:0}
+.tab.on{color:var(--cream);border-bottom-color:var(--violet)}
+.view{display:none;flex:1;min-height:0;overflow:hidden}
+.view.on{display:flex;flex-direction:column}
+.stats-bar{display:flex;border-bottom:1px solid var(--border);background:var(--navy2);flex-shrink:0}
+.stat-item{flex:1;padding:.45rem 0;text-align:center;border-right:1px solid var(--border)}
+.stat-item:last-child{border-right:none}
+.stat-n{font-size:1.05rem;font-weight:700}
+.stat-l{font-size:.62rem;color:var(--gray);margin-top:1px}
+.desk-inner{display:flex;flex:1;min-height:0;overflow:hidden}
+.seat-panel{flex:1;min-width:0;overflow-y:auto;padding:.7rem .6rem 1.5rem}
+.stage-label{text-align:center;font-size:.68rem;color:var(--gray);padding:4px;margin-bottom:.55rem;border:1px dashed rgba(255,255,255,0.1);border-radius:7px}
+.zone-label{font-size:.66rem;color:var(--gray);letter-spacing:.08em;text-transform:uppercase;margin:9px 0 3px 2px}
+.seat-row{display:flex;gap:4px;margin-bottom:4px;align-items:center}
+.row-id{font-size:.58rem;color:var(--gray);width:18px;text-align:right;flex-shrink:0}
+.seat{flex:1;min-width:0;height:62px;border-radius:7px;border:1px solid var(--border);background:var(--navy2);padding:4px 6px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;overflow:hidden;transition:border-color .1s,background .1s;user-select:none}
+.seat.has-person{cursor:pointer}
+.seat.empty{cursor:default}
+.seat.has-person:hover{border-color:var(--border2);background:var(--navy3)}
+.seat.drag-over{border:1.5px dashed var(--violet)!important;background:rgba(108,92,231,0.12)!important}
+.seat.t-vip    {background:var(--c-vip-bg);border-color:rgba(162,155,254,.3)}
+.seat.t-speaker{background:var(--c-sp-bg); border-color:rgba(253,203,110,.3)}
+.seat.t-org    {background:var(--c-org-bg);border-color:rgba(116,185,255,.3)}
+.seat.is-checked{outline:2px solid var(--teal);outline-offset:-2px}
+.seat.flash{animation:flash-anim .45s ease}
+@keyframes flash-anim{0%,100%{opacity:1}50%{opacity:.35;background:rgba(108,92,231,.3)}}
+
+/* VVIP / VIP+ 행 구분 */
+.row-grade-badge{
+  font-size:.52rem;font-weight:700;letter-spacing:.04em;
+  padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;
+}
+.badge-vvip {background:rgba(232,67,147,.25);color:#ff7eb3}
+.badge-vip-plus{background:rgba(253,203,110,.2);color:#fdcb6e}
+
+/* VVIP 자리 — 핫핑크 테두리 + 미묘한 배경 */
+.seat.zone-vvip{
+  border-color:rgba(232,67,147,.5)!important;
+  background:rgba(232,67,147,.08)!important;
+  box-shadow:inset 0 0 0 1px rgba(232,67,147,.2);
+}
+.seat.zone-vvip.t-vip    {background:rgba(232,67,147,.15)!important}
+.seat.zone-vvip.t-speaker{background:rgba(232,67,147,.12)!important}
+.seat.zone-vvip.t-org    {background:rgba(232,67,147,.12)!important}
+.seat.zone-vvip.empty    {border-color:rgba(232,67,147,.3)!important}
+
+/* VIP+ 자리 — 앰버 테두리 */
+.seat.zone-vip-plus{
+  border-color:rgba(225,125,44,.45)!important;
+  background:rgba(225,125,44,.07)!important;
+  box-shadow:inset 0 0 0 1px rgba(225,125,44,.18);
+}
+.seat.zone-vip-plus.t-vip    {background:rgba(225,125,44,.14)!important}
+.seat.zone-vip-plus.t-speaker{background:rgba(225,125,44,.12)!important}
+.seat.zone-vip-plus.t-org    {background:rgba(225,125,44,.12)!important}
+.seat.zone-vip-plus.empty    {border-color:rgba(225,125,44,.25)!important}
+.seat-key{position:absolute;top:2px;right:3px;font-size:.56rem;color:var(--gray);opacity:.55;pointer-events:none}
+.seat-check-icon{position:absolute;top:2px;left:3px;width:12px;height:12px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.seat-check-icon svg{width:8px;height:8px;stroke:#fff;stroke-width:2.5;fill:none}
+.seat-memo-dot{position:absolute;bottom:2px;left:3px;width:5px;height:5px;background:var(--amber);border-radius:50%;pointer-events:none}
+.seat-nm{font-size:.82rem;font-weight:600;color:var(--cream);line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;pointer-events:none;text-align:center;width:100%}
+.seat-og{font-size:.7rem;color:var(--gray2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;pointer-events:none;text-align:center;width:100%}
+#seat-popup{display:none;position:fixed;z-index:8000;background:var(--navy2);border:1px solid var(--border2);border-radius:10px;padding:6px;min-width:140px}
+#seat-popup.show{display:flex;flex-direction:column;gap:4px}
+.sp-name{font-size:.72rem;font-weight:600;color:var(--cream);padding:2px 6px 5px;border-bottom:1px solid var(--border);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-btn{padding:6px 10px;border-radius:7px;border:none;font-size:.73rem;font-weight:600;cursor:pointer;text-align:left;width:100%}
+.sp-check {background:rgba(0,184,148,.2); color:var(--teal)}
+.sp-check:hover {background:rgba(0,184,148,.4)}
+.sp-memo  {background:rgba(225,125,44,.15);color:#fdcb6e}
+.sp-memo:hover  {background:rgba(225,125,44,.35)}
+.sp-remove{background:rgba(232,67,147,.15);color:#ff7eb3}
+.sp-remove:hover{background:rgba(232,67,147,.32)}
+.unassigned-panel{width:188px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--navy2);overflow:hidden}
+.panel-hd{padding:.55rem .75rem .35rem;font-size:.7rem;color:var(--gray2);font-weight:500;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.panel-hd span{color:var(--violet);font-weight:700}
+.panel-search{margin:.4rem .5rem;padding:.38rem .6rem;background:var(--navy3);border:1px solid var(--border2);border-radius:7px;color:var(--cream);font-size:.77rem;width:calc(100% - 1rem);flex-shrink:0}
+.panel-search::placeholder{color:var(--gray)}
+.panel-search:focus{outline:none;border-color:var(--violet)}
+.plist{flex:1;overflow-y:auto;padding:0 .4rem .4rem;display:flex;flex-direction:column;gap:3px;min-height:0}
+.plist::-webkit-scrollbar{width:3px}
+.plist::-webkit-scrollbar-thumb{background:var(--navy3);border-radius:2px}
+.pcard{padding:5px 7px;border-radius:7px;border:1px solid var(--border);background:var(--navy);cursor:grab;user-select:none;transition:border-color .1s,background .1s}
+.pcard:hover{background:var(--navy3);border-color:var(--border2)}
+.pcard:active{cursor:grabbing}
+.pcard.t-vip    {border-left:2px solid var(--c-vip)}
+.pcard.t-speaker{border-left:2px solid var(--c-sp)}
+.pcard.t-org    {border-left:2px solid var(--c-org)}
+.pcard-nm{font-size:.76rem;font-weight:600;color:var(--cream)}
+.pcard-og{font-size:.63rem;color:var(--gray2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.role-badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.58rem;font-weight:700;margin-right:3px;vertical-align:1px}
+.rb-vip    {background:var(--c-vip-bg);color:var(--c-vip)}
+.rb-speaker{background:var(--c-sp-bg); color:var(--c-sp)}
+.rb-org    {background:var(--c-org-bg);color:var(--c-org)}
+.desk-actions{display:flex;gap:5px;padding:.45rem .65rem;border-top:1px solid var(--border);background:var(--navy);flex-shrink:0}
+.btn-act{flex:1;padding:.42rem;background:var(--navy3);border:1px solid var(--border2);border-radius:8px;color:var(--cream2);font-size:.7rem;cursor:pointer;text-align:center;transition:border-color .15s,color .15s;white-space:nowrap}
+.btn-act:hover{border-color:var(--violet);color:var(--c-vip)}
+.btn-act.danger:hover{border-color:var(--rose);color:var(--rose)}
+#mob-view.on{overflow-y:auto}
+.mob-wrap{max-width:480px;margin:0 auto;width:100%;padding:1rem 1rem 2rem}
+.mob-title{text-align:center;margin-bottom:1.1rem}
+.mob-title h1{font-size:1.05rem;font-weight:700}
+.mob-title p{font-size:.74rem;color:var(--gray);margin-top:2px}
+.mob-search-wrap{position:relative;margin-bottom:.8rem}
+.mob-search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:18px;height:18px;stroke:var(--gray);stroke-width:1.8;pointer-events:none}
+.mob-search-input{width:100%;padding:.78rem 1rem .78rem 2.5rem;background:var(--navy2);border:1px solid var(--border2);border-radius:12px;color:var(--cream);font-size:1rem;-webkit-appearance:none}
+.mob-search-input:focus{outline:none;border-color:var(--violet)}
+.mob-clear{position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray);font-size:1rem;cursor:pointer;padding:4px;display:none}
+.mob-clear.show{display:block}
+.mob-results{display:flex;flex-direction:column;gap:10px}
+.mob-card{background:var(--navy2);border:1px solid var(--border);border-radius:13px;padding:.85rem .95rem;animation:slide-up .18s ease}
+@keyframes slide-up{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.mob-card.t-vip    {border-left:3px solid var(--c-vip)}
+.mob-card.t-speaker{border-left:3px solid var(--c-sp)}
+.mob-card.t-org    {border-left:3px solid var(--c-org)}
+.mob-card.is-checked{background:var(--c-chk-bg)}
+.mob-person-name{font-size:1.05rem;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mob-checked-badge{font-size:.62rem;background:var(--teal);color:#fff;padding:2px 7px;border-radius:10px;font-weight:600}
+.mob-person-org{font-size:.76rem;color:var(--gray2);margin-bottom:.7rem;line-height:1.4}
+.mob-seat-box{display:flex;align-items:center;gap:10px;background:var(--navy3);border-radius:10px;padding:.6rem .85rem;margin-bottom:.45rem}
+.mob-seat-key{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+.mob-seat-key.t-vip    {color:var(--c-vip)}
+.mob-seat-key.t-speaker{color:var(--c-sp)}
+.mob-seat-key.t-org    {color:var(--c-org)}
+.mob-seat-desc{font-size:.7rem;color:var(--gray2);margin-top:1px}
+.mob-memo-box{background:rgba(225,125,44,.1);border-radius:8px;padding:.45rem .7rem;font-size:.76rem;color:#fdcb6e;margin-bottom:.4rem;line-height:1.5}
+.mob-check-btn{width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--border2);font-size:.78rem;cursor:pointer;font-weight:500;transition:all .15s;background:var(--navy3);color:var(--cream2)}
+.mob-check-btn.checked{background:var(--c-chk-bg);border-color:var(--teal);color:var(--teal)}
+.mob-unassigned{display:flex;align-items:center;gap:8px;background:rgba(232,67,147,.1);border-radius:10px;padding:.6rem .85rem;font-size:.78rem;color:#ff7eb3}
+.mob-empty{text-align:center;padding:2.5rem 1rem;color:var(--gray);font-size:.86rem;line-height:1.7}
+.mob-empty-icon{font-size:1.7rem;margin-bottom:.4rem;display:block}
+#map-view.on{overflow-y:auto}
+.map-search-wrap{padding:.45rem .65rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.map-search{width:100%;padding:.38rem .65rem;background:var(--navy2);border:1px solid var(--border2);border-radius:8px;color:var(--cream);font-size:.78rem}
+.map-search:focus{outline:none;border-color:var(--violet)}
+.map-wrap{padding:.55rem .55rem 1rem}
+.map-zone-label{font-size:.65rem;color:var(--gray);letter-spacing:.08em;text-transform:uppercase;margin:8px 0 3px 2px}
+.map-row{display:flex;gap:3px;margin-bottom:3px;align-items:center}
+.map-row-id{font-size:.57rem;color:var(--gray);width:15px;text-align:right;flex-shrink:0}
+.map-seat{flex:1;min-width:0;height:42px;border-radius:6px;border:1px solid var(--border);background:var(--navy2);display:flex;flex-direction:column;justify-content:center;padding:2px 3px;overflow:hidden;cursor:pointer;position:relative}
+.map-seat.t-vip    {background:var(--c-vip-bg);border-color:rgba(162,155,254,.3)}
+.map-seat.t-speaker{background:var(--c-sp-bg); border-color:rgba(253,203,110,.3)}
+.map-seat.t-org    {background:var(--c-org-bg);border-color:rgba(116,185,255,.3)}
+.map-seat.is-checked{outline:2px solid var(--teal);outline-offset:-2px}
+.map-seat.highlight{box-shadow:0 0 0 2px var(--violet)}
+.map-check-dot{position:absolute;top:2px;left:2px;width:5px;height:5px;background:var(--teal);border-radius:50%}
+.map-seat-nm{font-size:.59rem;font-weight:600;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}
+.map-seat-key{font-size:.53rem;color:var(--gray);pointer-events:none}
+.map-stage{text-align:center;font-size:.67rem;color:var(--gray);padding:4px;margin-bottom:5px;border:1px dashed rgba(255,255,255,.1);border-radius:7px}
+#print-view.on{overflow-y:auto}
+.print-wrap{padding:.9rem;max-width:820px;margin:0 auto}
+.print-toolbar{display:flex;gap:8px;margin-bottom:.9rem;align-items:center;flex-wrap:wrap}
+.print-toolbar-title{font-size:.88rem;font-weight:600;flex:1}
+.btn-print{padding:.42rem .9rem;background:var(--violet);border:none;border-radius:8px;color:#fff;font-size:.76rem;cursor:pointer;font-weight:500}
+.btn-print:hover{background:var(--violet2)}
+.print-section{background:var(--navy2);border:1px solid var(--border);border-radius:11px;padding:.85rem;margin-bottom:.85rem}
+.print-section-title{font-size:.72rem;color:var(--gray);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.6rem;padding-bottom:.35rem;border-bottom:1px solid var(--border)}
+.print-row{display:flex;gap:3px;margin-bottom:3px;align-items:center}
+.print-row-id{font-size:.6rem;color:var(--gray);width:20px;text-align:right;flex-shrink:0}
+.print-cell{flex:1;min-width:0;padding:4px 5px;background:var(--navy3);border-radius:5px;border:1px solid var(--border);min-height:34px;display:flex;flex-direction:column;justify-content:center}
+.print-cell.t-vip    {background:var(--c-vip-bg);border-color:rgba(162,155,254,.3)}
+.print-cell.t-speaker{background:var(--c-sp-bg); border-color:rgba(253,203,110,.3)}
+.print-cell.t-org    {background:var(--c-org-bg);border-color:rgba(116,185,255,.3)}
+.print-cell.is-checked{outline:1.5px solid var(--teal);outline-offset:-1px}
+.print-cell-name{font-size:.68rem;font-weight:600;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.print-cell-org {font-size:.56rem;color:var(--gray2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#qr-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,14,26,.9);align-items:center;justify-content:center;padding:1.5rem}
+#qr-modal.show{display:flex}
+.qr-box{background:var(--navy2);border:1px solid var(--border2);border-radius:16px;padding:1.4rem;max-width:320px;width:100%;text-align:center}
+.qr-box h3{font-size:.95rem;font-weight:600;margin-bottom:.35rem}
+.qr-box p{font-size:.72rem;color:var(--gray2);margin-bottom:.9rem;line-height:1.6}
+#qr-canvas{display:flex;justify-content:center;margin-bottom:.9rem}
+.qr-url{font-size:.66rem;color:var(--gray);word-break:break-all;background:var(--navy3);padding:.38rem .65rem;border-radius:6px;margin-bottom:.9rem}
+.qr-close{width:100%;padding:.55rem;background:var(--navy3);border:1px solid var(--border2);border-radius:8px;color:var(--cream2);font-size:.82rem;cursor:pointer}
+#memo-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,14,26,.88);align-items:center;justify-content:center;padding:1.5rem}
+#memo-modal.show{display:flex}
+.memo-box{background:var(--navy2);border:1px solid var(--border2);border-radius:14px;padding:1.2rem;max-width:340px;width:100%}
+.memo-box h3{font-size:.93rem;font-weight:600;margin-bottom:.2rem}
+.memo-sub{font-size:.72rem;color:var(--gray2);margin-bottom:.75rem}
+.memo-textarea{width:100%;padding:.55rem .75rem;background:var(--navy3);border:1px solid var(--border2);border-radius:8px;color:var(--cream);font-size:.83rem;resize:vertical;min-height:76px;font-family:inherit;line-height:1.6}
+.memo-textarea:focus{outline:none;border-color:var(--violet)}
+.memo-textarea::placeholder{color:var(--gray)}
+.memo-btns{display:flex;gap:8px;margin-top:.65rem}
+.memo-btns button{flex:1;padding:.5rem;border-radius:8px;border:1px solid var(--border2);font-size:.8rem;cursor:pointer;font-weight:500}
+.memo-cancel{background:var(--navy3);color:var(--cream2)}
+.memo-save{background:var(--violet);border-color:var(--violet);color:#fff}
+#confirm-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,14,26,.85);align-items:center;justify-content:center;padding:1.5rem}
+#confirm-modal.show{display:flex}
+.confirm-box{background:var(--navy2);border:1px solid var(--border2);border-radius:14px;padding:1.3rem;max-width:290px;width:100%;text-align:center}
+.confirm-box h3{font-size:.92rem;font-weight:600;margin-bottom:.35rem}
+.confirm-box p{font-size:.78rem;color:var(--gray2);margin-bottom:1rem;line-height:1.6}
+.confirm-btns{display:flex;gap:8px}
+.confirm-btns button{flex:1;padding:.52rem;border-radius:8px;border:1px solid var(--border2);font-size:.8rem;cursor:pointer;font-weight:500}
+.btn-cancel{background:var(--navy3);color:var(--cream2)}
+.btn-confirm-ok{background:var(--rose);border-color:var(--rose);color:#fff}
+#toast{position:fixed;bottom:65px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy3);border:1px solid var(--border2);padding:6px 15px;border-radius:20px;font-size:.74rem;color:var(--cream2);opacity:0;transition:all .22s;pointer-events:none;z-index:9000;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media print{
+  body{background:#fff;color:#111;height:auto;overflow:visible}
+  #conn-bar,#tab-bar,.legend,.desk-actions,#toast,#qr-modal,#memo-modal,#confirm-modal,#seat-popup{display:none!important}
+  .view{display:none!important}
+  #print-view{display:block!important;overflow:visible}
+  .print-toolbar{display:none!important}
+  .print-section{background:#fff;border:1px solid #ccc;page-break-inside:avoid}
+  .print-cell{background:#f5f5f5;border-color:#ccc}
+  .print-cell.t-vip{background:#ede9ff}
+  .print-cell.t-speaker{background:#fff8e0}
+  .print-cell.t-org{background:#e6f3ff}
+  .print-cell.is-checked{outline:2px solid #00b894}
+  .print-cell-name{color:#111}.print-cell-org{color:#555}
+}
+@media(max-width:640px){
+  .unassigned-panel{display:none}
+  .seat-panel{padding:.55rem .4rem 1rem}
+  .seat{height:54px}
+  .seat-og{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="seat-popup">
+  <div class="sp-name" id="sp-name"></div>
+  <button class="sp-btn sp-check" id="sp-check" onclick="popCheck()"></button>
+  <button class="sp-btn sp-memo" onclick="popMemo()">📝 메모</button>
+  <button class="sp-btn sp-remove" onclick="popRemove()">✕ 자리 제거</button>
+</div>
+<div id="memo-modal"><div class="memo-box">
+  <h3 id="memo-title">메모</h3>
+  <div class="memo-sub" id="memo-sub"></div>
+  <textarea class="memo-textarea" id="memo-textarea" placeholder="예: 오전만 참석, VIP 의전 필요..."></textarea>
+  <div class="memo-btns">
+    <button class="memo-cancel" onclick="closeMemo()">취소</button>
+    <button class="memo-save" onclick="saveMemo()">저장</button>
+  </div>
+</div></div>
+<div id="confirm-modal"><div class="confirm-box">
+  <h3 id="confirm-title"></h3><p id="confirm-msg"></p>
+  <div class="confirm-btns">
+    <button class="btn-cancel" onclick="closeConfirm()">취소</button>
+    <button class="btn-confirm-ok" id="confirm-ok">확인</button>
+  </div>
+</div></div>
+<div id="qr-modal"><div class="qr-box">
+  <h3>📱 현장 조회 QR코드</h3>
+  <p>스태프 핸드폰으로 스캔하면 이 앱이 바로 열립니다</p>
+  <div id="qr-canvas"></div>
+  <div class="qr-url" id="qr-url"></div>
+  <button class="qr-close" onclick="closeQR()">닫기</button>
+</div></div>
+<div id="toast"></div>
+
+<div id="conn-bar">
+  <div class="conn-dot" id="conn-dot"></div>
+  <span id="conn-label">시작 중...</span>
+  <div class="conn-right">
+    <span class="badge-live" id="badge-live">● LIVE</span>
+    <span style="font-size:.7rem;color:var(--gray)">2025 사람과디지털포럼</span>
+  </div>
+</div>
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--c-vip)"></div>VIP</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--c-sp)"></div>연사</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--c-org)"></div>주최</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>참석확인</div>
+  <div class="legend-item" style="gap:5px">
+    <div style="width:12px;height:12px;border-radius:3px;background:rgba(225,125,44,.3);border:1px solid rgba(225,125,44,.6);flex-shrink:0"></div>
+    <span>VIP+</span>
+  </div>
+  <div class="legend-item" style="gap:5px">
+    <div style="width:12px;height:12px;border-radius:3px;background:rgba(232,67,147,.25);border:1px solid rgba(232,67,147,.6);flex-shrink:0"></div>
+    <span>VVIP</span>
+  </div>
+  <div class="legend-hint">클릭 → 메뉴 | 드래그 → 자리 이동</div>
+</div>
+<div id="tab-bar">
+  <div class="tab on" id="tab-desk" onclick="switchTab('desk')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>배치 편집
+  </div>
+  <div class="tab" id="tab-mob" onclick="switchTab('mob')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1"/></svg>현장 조회
+  </div>
+  <div class="tab" id="tab-map" onclick="switchTab('map')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7z"/><path d="M9 4v13M15 7v13"/></svg>전체 지도
+  </div>
+  <div class="tab" id="tab-print" onclick="switchTab('print')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>인쇄/QR
+  </div>
+</div>
+
+<div class="view on" id="desk-view">
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-n">50</div><div class="stat-l">전체</div></div>
+    <div class="stat-item"><div class="stat-n" id="st-done" style="color:var(--teal)">0</div><div class="stat-l">배치완료</div></div>
+    <div class="stat-item"><div class="stat-n" id="st-checked" style="color:var(--c-vip)">0</div><div class="stat-l">참석확인</div></div>
+    <div class="stat-item"><div class="stat-n" id="st-left" style="color:var(--amber)">0</div><div class="stat-l">미배치</div></div>
+  </div>
+  <div class="desk-inner">
+    <div class="seat-panel" id="seat-panel" ondragover="event.preventDefault()" ondrop="dropGlobal(event)">
+      <div class="stage-label">▲ 연단 / 사회자</div>
+      <div id="chart"></div>
+    </div>
+    <div class="unassigned-panel">
+      <div class="panel-hd">미배치 <span id="panel-count">0</span>명</div>
+      <input class="panel-search" type="text" placeholder="이름 검색..." id="panel-search" oninput="renderPanel(this.value)">
+      <div class="plist" id="panel-list" ondragover="event.preventDefault()" ondrop="dropToPanel(event)"></div>
+    </div>
+  </div>
+  <div class="desk-actions">
+    <button class="btn-act" onclick="doExport()">📋 현황복사</button>
+    <button class="btn-act" onclick="switchTab('print')">🖨 인쇄/QR</button>
+    <button class="btn-act danger" onclick="doReset()">↺ 초기화</button>
+  </div>
+</div>
+<div class="view" id="mob-view">
+  <div class="mob-wrap">
+    <div class="mob-title"><h1>VIP 자리 확인</h1><p>이름을 검색하면 자리와 참석 여부를 확인합니다</p></div>
+    <div class="mob-search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="mob-search-input" type="text" id="mob-search" placeholder="VIP 이름 입력..."
+        oninput="mobSearch(this.value);document.getElementById('mob-clear').classList.toggle('show',this.value.length>0)"
+        autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="mob-clear" id="mob-clear" onclick="clearMobSearch()">✕</button>
+    </div>
+    <div id="mob-results" class="mob-results"></div>
+  </div>
+</div>
+<div class="view" id="map-view">
+  <div class="map-search-wrap">
+    <input class="map-search" type="text" placeholder="이름으로 자리 강조..." id="map-search" oninput="renderMap(this.value)">
+  </div>
+  <div class="map-wrap">
+    <div class="map-stage">▲ 연단 / 사회자</div>
+    <div id="map-chart"></div>
+  </div>
+</div>
+<div class="view" id="print-view">
+  <div class="print-wrap">
+    <div class="print-toolbar">
+      <div class="print-toolbar-title">🖨 인쇄용 배치도 &amp; QR코드</div>
+      <button class="btn-print" onclick="showQR()">📱 QR코드</button>
+      <button class="btn-print" onclick="window.print()">인쇄하기</button>
+    </div>
+    <div id="print-content"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   Firebase REST API — SDK 없이 직접 통신
+   외부 스크립트 로딩 없음 → 타이밍 문제 제로
+   ═══════════════════════════════════════════════ */
+const FB_URL  = 'https://hdf-vip-seat-plan-default-rtdb.firebaseio.com/hdf2025v4';
+const APP_URL = location.href.split('?')[0];
+
+/* REST PUT — 특정 경로에 값 저장 */
+async function fbPut(path, data){
+  try{
+    await fetch(`${FB_URL}/${path}.json`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+  }catch(e){console.warn('fbPut error',e);}
+}
+
+/* REST GET — 전체 데이터 한 번 읽기 */
+async function fbGet(){
+  try{
+    const r = await fetch(`${FB_URL}.json`);
+    return r.ok ? await r.json() : null;
+  }catch(e){return null;}
+}
+
+/* 롱폴링 — EventSource(SSE) 로 실시간 수신 */
+let evtSource = null;
+function fbListen(cb){
+  if(evtSource) evtSource.close();
+  evtSource = new EventSource(`${FB_URL}.json?accept=text/event-stream`);
+  evtSource.addEventListener('put', function(e){
+    try{ const d=JSON.parse(e.data); cb(d.data); }catch(ex){}
+  });
+  evtSource.addEventListener('patch', function(e){
+    try{ const d=JSON.parse(e.data); cb(null, d.data); }catch(ex){}
+  });
+  evtSource.onerror = function(){
+    /* SSE 연결 끊기면 3초 후 재연결 */
+    setTimeout(()=>fbListen(cb), 3000);
+  };
+  return evtSource;
+}
+
+/* ═══════════════════════════════════════════════
+   데이터
+   ═══════════════════════════════════════════════ */
+const PEOPLE = [
+  {id:'p1', name:'최우성',          org:'한겨레신문사 대표',                   type:'org'},
+  {id:'p2', name:'이학영',          org:'국회부의장',                         type:'vip'},
+  {id:'p3', name:'최형두',          org:'국회의원 · 과학기술정보방송통신위',      type:'vip'},
+  {id:'p4', name:'김우영',          org:'국회의원 · 과학기술정보방송통신위',      type:'vip'},
+  {id:'p5', name:'조승래',          org:'국회의원 · 기획재정위원회',             type:'vip'},
+  {id:'p6', name:'야엘 아이젠스타트', org:'민주주의를 위한 사이버보안 이사',       type:'speaker'},
+  {id:'p7', name:'마티아스 슈필캄프', org:'알고리즘워치 이사 · 공동창립자',       type:'speaker'},
+  {id:'p8', name:'박원호',          org:'서울대 정치외교학부 교수',              type:'speaker'},
+  {id:'p9', name:'이해민',          org:'조국혁신당 국회의원',                  type:'speaker'},
+  {id:'p10',name:'강정한',          org:'연세대 사회학과 교수',                 type:'speaker'},
+  {id:'p11',name:'유승현',          org:'한양대 언론정보대학원 겸임교수',         type:'speaker'},
+  {id:'p12',name:'황용석',          org:'건국대 미디어커뮤니케이션학과 교수',      type:'speaker'},
+  {id:'p13',name:'장여경',          org:'정보인권연구소 상임이사',               type:'speaker'},
+  {id:'p14',name:'강정수',          org:'블루닷AI연구센터 센터장',               type:'speaker'},
+  {id:'p15',name:'류이근',          org:'한겨레경제사회연구원장',                type:'org'},
+  {id:'p16',name:'윤종수',          org:'법무법인 광장 파트너',                 type:'vip'},
+  {id:'p17',name:'이상윤',          org:'성공회대학교 교수',                    type:'vip'},
+  {id:'p18',name:'이창현',          org:'국민대 미디어광고학부 교수',             type:'vip'},
+  {id:'p19',name:'이원태',          org:'국민대학교 특임교수',                  type:'vip'},
+  {id:'p20',name:'전치형',          org:'카이스트 과학기술정책대학원 교수',        type:'vip'},
+  {id:'p21',name:'이종욱',          org:'서울과학기술대학교 교수',               type:'vip'},
+  {id:'p22',name:'장혜영',          org:'민주노동당 마포구위원회 지역위원장',      type:'vip'},
+  {id:'p23',name:'이정환',          org:'슬로우뉴스 대표',                     type:'vip'},
+  {id:'p24',name:'김춘이',          org:'기후생태연대 대표',                    type:'vip'},
+  {id:'p25',name:'윤경효',          org:'한국지속가능발전센터 이사',              type:'vip'},
+  {id:'p26',name:'이승윤',          org:'중앙대학교 교수',                     type:'vip'},
+  {id:'p27',name:'김준수',          org:'비바리퍼블리카 홍보실장',               type:'vip'},
+  {id:'p28',name:'오준호',          org:'기본소득정책연구소 소장',               type:'vip'},
+  {id:'p29',name:'김완희',          org:'가천대학교 교수',                     type:'vip'},
+  {id:'p30',name:'김현미',          org:'연세대 문화인류학과 교수',              type:'vip'},
+  {id:'p31',name:'송경용',          org:'한국노동재단 공동이사장',               type:'vip'},
+  {id:'p32',name:'윤정숙',          org:'전 녹색연합 공동대표',                 type:'vip'},
+  {id:'p33',name:'김기영',          org:'대산농촌재단 이사장',                  type:'vip'},
+  {id:'p34',name:'조영준',          org:'대한상공회의소 지속가능경영원장',         type:'vip'},
+  {id:'p35',name:'홍일표',          org:'국회입법조사처 사회문화조사실장',         type:'vip'},
+  {id:'p36',name:'장영승',          org:'에피카 CSO',                        type:'vip'},
+  {id:'p37',name:'이원재',          org:'LAB2050 이사장',                    type:'vip'},
+  {id:'p38',name:'곽금순',          org:'한살림재단 이사장',                    type:'vip'},
+  {id:'p39',name:'장지연',          org:'한국사회가치연대기금 사무총장',           type:'vip'},
+  {id:'p40',name:'안소영',          org:'LG AI연구원 정책수석',                type:'vip'},
+  {id:'p41',name:'안미현',          org:'한국자활복지개발원 자활연수원장',         type:'vip'},
+  {id:'p42',name:'권태선',          org:'방송문화진흥회 이사장',                 type:'vip'},
+  {id:'p43',name:'김병철',          org:'방송문화진흥회 이사',                  type:'vip'},
+  {id:'p44',name:'박진도',          org:'국민총행복전환포럼 이사장',              type:'vip'},
+  {id:'p45',name:'박재연',          org:'아주대학교 교수',                     type:'vip'},
+  {id:'p46',name:'조현경',          org:'한겨레경제사회연구원 부원장',            type:'org'},
+  {id:'p47',name:'이주현',          org:'한겨레신문사 뉴스룸 국장',              type:'org'},
+  {id:'p48',name:'장덕남',          org:'한겨레신문사 광고국장',                type:'org'},
+  {id:'p49',name:'안재승',          org:'한겨레신문사 전무',                    type:'org'},
+  {id:'p50',name:'송호진',          org:'한겨레신문사 전략마케팅본부',            type:'org'},
+];
+const ZONES = [
+  {label:'A구역 (앞 — 무대 인접)', rows:[
+    {id:'A1',seats:7},
+    {id:'A2',seats:7, grade:'vip_plus'},
+    {id:'A3',seats:7, grade:'vvip'},
+    {id:'A4',seats:7},
+  ]},
+  {label:'B구역 (뒤)', rows:[
+    {id:'B1',seats:7},{id:'B2',seats:8},{id:'B3',seats:8},{id:'B4',seats:7},{id:'B5',seats:7}
+  ]},
+];
+
+/* ═══════════════════════════════════════════════
+   상태
+   ═══════════════════════════════════════════════ */
+let seatMap={}, checkMap={}, memoMap={};
+let dragPid=null, dragFrom=null;
+let currentTab='desk';
+let memoTarget=null;
+let popupKey=null;
+
+/* ═══════════════════════════════════════════════
+   헬퍼
+   ═══════════════════════════════════════════════ */
+function allKeys(){
+  const k=[];
+  ZONES.forEach(z=>z.rows.forEach(r=>{for(let i=1;i<=r.seats;i++)k.push(r.id+'-'+i);}));
+  return k;
+}
+function getPerson(id){return PEOPLE.find(p=>p.id===id)}
+function getAssigned(){return Object.values(seatMap).filter(Boolean)}
+function getUnassigned(f=''){
+  const a=new Set(getAssigned());
+  return PEOPLE.filter(p=>!a.has(p.id)&&(!f||p.name.includes(f)));
+}
+function getSeatOf(pid){return Object.keys(seatMap).find(k=>seatMap[k]===pid)}
+function typeClass(t){return t==='vip'?'t-vip':t==='speaker'?'t-speaker':t==='org'?'t-org':''}
+function roleLabel(t){
+  if(t==='vip')     return '<span class="role-badge rb-vip">VIP</span>';
+  if(t==='speaker') return '<span class="role-badge rb-speaker">연사</span>';
+  if(t==='org')     return '<span class="role-badge rb-org">주최</span>';
+  return '';
+}
+function getZoneDesc(key){
+  const row=key.split('-')[0];
+  return (row.startsWith('A')?'A구역(앞)':'B구역(뒤)')+' · '+parseInt(row.slice(1))+'행 '+parseInt(key.split('-')[1])+'번';
+}
+
+/* ═══════════════════════════════════════════════
+   로컬스토리지 (폴백)
+   ═══════════════════════════════════════════════ */
+function saveLocal(){
+  try{
+    localStorage.setItem('hdf_seats', JSON.stringify(seatMap));
+    localStorage.setItem('hdf_check', JSON.stringify(checkMap));
+    localStorage.setItem('hdf_memo',  JSON.stringify(memoMap));
+  }catch(e){}
+}
+function loadLocal(){
+  try{
+    const s=localStorage.getItem('hdf_seats');
+    if(s) seatMap=JSON.parse(s);
+    const c=localStorage.getItem('hdf_check'); if(c) checkMap=JSON.parse(c);
+    const m=localStorage.getItem('hdf_memo');  if(m) memoMap=JSON.parse(m);
+  }catch(e){}
+}
+
+/* ═══════════════════════════════════════════════
+   Firebase 동기화
+   ═══════════════════════════════════════════════ */
+function mergeData(data){
+  /* 빈 DB면 현재 상태 유지 */
+  if(!data) return;
+  allKeys().forEach(k=>{
+    const rk=k.replace(/-/g,'_');
+    seatMap[k]=(data.seats&&data.seats[rk])||null;
+  });
+  checkMap={};
+  if(data.check&&typeof data.check==='object'){
+    Object.keys(data.check).forEach(pid=>{if(data.check[pid]===true)checkMap[pid]=true;});
+  }
+  memoMap=(data.memo&&typeof data.memo==='object')?data.memo:{};
+}
+
+/* 내가 직접 쓴 변경사항이 SSE로 되돌아올 때 무시하기 위한 플래그 */
+let _ignoreRemote = false;
+
+async function pushSeat(key, pid){
+  seatMap[key]=pid||null; saveLocal();
+  _ignoreRemote = true;
+  await fbPut(`seats/${key.replace(/-/g,'_')}`, pid||null);
+  setTimeout(()=>{ _ignoreRemote = false; }, 1000);
+}
+async function pushCheck(pid, val){
+  if(val) checkMap[pid]=true; else delete checkMap[pid]; saveLocal();
+  _ignoreRemote = true;
+  await fbPut(`check/${pid}`, val||null);
+  setTimeout(()=>{ _ignoreRemote = false; }, 1000);
+}
+async function pushMemo(pid, text){
+  if(text) memoMap[pid]=text; else delete memoMap[pid]; saveLocal();
+  _ignoreRemote = true;
+  await fbPut(`memo/${pid}`, text||null);
+  setTimeout(()=>{ _ignoreRemote = false; }, 1000);
+}
+async function pushAll(){
+  const seats={},check={},memo={};
+  allKeys().forEach(k=>{seats[k.replace(/-/g,'_')]=seatMap[k]||null;});
+  Object.assign(check,checkMap); Object.assign(memo,memoMap);
+  saveLocal();
+  _ignoreRemote = true;
+  await fbPut('', {seats,check,memo});
+  setTimeout(()=>{ _ignoreRemote = false; }, 1500);
+}
+
+/* ═══════════════════════════════════════════════
+   렌더
+   ═══════════════════════════════════════════════ */
+function render(){
+  if(currentTab==='desk'){renderChart();renderPanel(document.getElementById('panel-search').value);}
+  if(currentTab==='mob') mobSearch(document.getElementById('mob-search').value);
+  if(currentTab==='map') renderMap(document.getElementById('map-search').value);
+  if(currentTab==='print') renderPrint();
+  updateStats();
+}
+
+function renderChart(){
+  let h='';
+  ZONES.forEach(z=>{
+    h+=`<div class="zone-label">${z.label}</div>`;
+    z.rows.forEach(r=>{
+      const gradeClass = r.grade==='vvip'?'zone-vvip':r.grade==='vip_plus'?'zone-vip-plus':'';
+      const gradeBadge = r.grade==='vvip'
+        ?'<span class="row-grade-badge badge-vvip">VVIP</span>'
+        :r.grade==='vip_plus'
+        ?'<span class="row-grade-badge badge-vip-plus">VIP+</span>'
+        :'';
+      h+=`<div class="seat-row"><span class="row-id">${r.id}${gradeBadge}</span>`;
+      for(let i=1;i<=r.seats;i++){
+        const k=r.id+'-'+i, pid=seatMap[k], p=pid?getPerson(pid):null;
+        const tc=p?typeClass(p.type):'';
+        const chk=pid&&checkMap[pid]?'is-checked':'';
+        h+=`<div class="seat ${tc} ${chk} ${pid?'has-person':'empty'} ${gradeClass}" id="s-${k}"
+          draggable="${pid?'true':'false'}"
+          ondragstart="dragStart(event,'${k}')"
+          ondragover="event.preventDefault();dragOver(event,'${k}')"
+          ondragleave="dragLeave(event,'${k}')"
+          ondrop="dropToSeat(event,'${k}')"
+          onclick="seatClick(event,'${k}')"
+          title="${p?p.name+' / '+p.org:k}">
+          <span class="seat-key">${k}</span>
+          ${pid&&checkMap[pid]?`<span class="seat-check-icon"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></span>`:''}
+          ${pid&&memoMap[pid]?`<span class="seat-memo-dot"></span>`:''}
+          ${p?`<span class="seat-nm">${p.name}</span><span class="seat-og">${p.org}</span>`:''}
+        </div>`;
+      }
+      h+=`</div>`;
+    });
+  });
+  document.getElementById('chart').innerHTML=h;
+}
+
+function renderPanel(f=''){
+  const people=getUnassigned(f);
+  document.getElementById('panel-count').textContent=getUnassigned().length;
+  const el=document.getElementById('panel-list');
+  if(!people.length){
+    el.innerHTML=`<div style="font-size:.72rem;color:var(--gray);padding:8px 4px">${f?'검색 결과 없음':'모두 배치 완료 ✓'}</div>`;
+    return;
+  }
+  el.innerHTML=people.map(p=>`
+    <div class="pcard ${typeClass(p.type)}" draggable="true"
+         ondragstart="dragStartPanel(event,'${p.id}')" title="${p.name}">
+      <div class="pcard-nm">${roleLabel(p.type)}${p.name}</div>
+      <div class="pcard-og">${p.org}</div>
+    </div>`).join('');
+}
+
+function updateStats(){
+  const a=getAssigned().length;
+  const chk=Object.values(checkMap).filter(v=>v===true).length;
+  document.getElementById('st-done').textContent=a;
+  document.getElementById('st-checked').textContent=chk;
+  document.getElementById('st-left').textContent=PEOPLE.length-a;
+}
+
+function mobSearch(q){
+  const el=document.getElementById('mob-results');
+  if(!q){el.innerHTML=`<div class="mob-empty"><span class="mob-empty-icon">🔍</span>이름을 입력하면 자리를 바로 확인합니다</div>`;return;}
+  const results=PEOPLE.filter(p=>p.name.includes(q)||p.org.includes(q));
+  if(!results.length){el.innerHTML=`<div class="mob-empty"><span class="mob-empty-icon">😕</span>검색 결과가 없습니다</div>`;return;}
+  el.innerHTML=results.map(p=>{
+    const tc=typeClass(p.type), key=getSeatOf(p.id);
+    const kc=p.type==='speaker'?'t-speaker':p.type==='org'?'t-org':'t-vip';
+    const isChk=!!checkMap[p.id], memo=memoMap[p.id];
+    return `<div class="mob-card ${tc}${isChk?' is-checked':''}">
+      <div class="mob-person-name">${roleLabel(p.type)}${p.name}${isChk?'<span class="mob-checked-badge">✓ 참석확인</span>':''}</div>
+      <div class="mob-person-org">${p.org}</div>
+      ${key?`<div class="mob-seat-box">
+        <div style="font-size:1.3rem">💺</div>
+        <div><div class="mob-seat-key ${kc}">${key}</div><div class="mob-seat-desc">${getZoneDesc(key)}</div></div>
+      </div>`:`<div class="mob-unassigned">⚠️ 자리 미배치 — 스태프에게 문의</div>`}
+      ${memo?`<div class="mob-memo-box">📝 ${memo}</div>`:''}
+      ${key?`<button class="mob-check-btn${isChk?' checked':''}" onclick="mobToggleCheck('${p.id}',this)">
+        ${isChk?'✓ 참석 확인됨 (탭하면 취소)':'⬜ 참석 확인하기'}
+      </button>`:''}
+    </div>`;
+  }).join('');
+}
+function clearMobSearch(){
+  document.getElementById('mob-search').value='';
+  document.getElementById('mob-clear').classList.remove('show');
+  mobSearch('');
+}
+
+function renderMap(f=''){
+  let h='';
+  ZONES.forEach(z=>{
+    h+=`<div class="map-zone-label">${z.label}</div>`;
+    z.rows.forEach(r=>{
+      const gradeClass=r.grade==='vvip'?'zone-vvip':r.grade==='vip_plus'?'zone-vip-plus':'';
+      h+=`<div class="map-row"><span class="map-row-id">${r.id}</span>`;
+      for(let i=1;i<=r.seats;i++){
+        const k=r.id+'-'+i, pid=seatMap[k], p=pid?getPerson(pid):null;
+        const tc=p?typeClass(p.type):'', chk=pid&&checkMap[pid]?'is-checked':'';
+        const hl=f&&p&&p.name.includes(f)?'highlight':'';
+        h+=`<div class="map-seat ${tc} ${chk} ${hl} ${gradeClass}" onclick="showToast('${k}'+(seatMap['${k}']?' · '+getPerson(seatMap['${k}']).name:''))" title="${p?p.name:k}">
+          ${pid&&checkMap[pid]?`<div class="map-check-dot"></div>`:''}
+          ${p?`<span class="map-seat-nm">${p.name}</span>`:''}
+          <span class="map-seat-key">${k}</span>
+        </div>`;
+      }
+      h+=`</div>`;
+    });
+  });
+  document.getElementById('map-chart').innerHTML=h;
+}
+
+function renderPrint(){
+  let h=`<div style="text-align:center;margin-bottom:.9rem;font-size:.82rem;color:var(--gray2)">2025 사람과디지털포럼 VIP 자리배치 · ${new Date().toLocaleString('ko-KR')}</div>`;
+  ZONES.forEach(z=>{
+    h+=`<div class="print-section"><div class="print-section-title">${z.label}</div>`;
+    z.rows.forEach(r=>{
+      h+=`<div class="print-row"><span class="print-row-id">${r.id}</span>`;
+      for(let i=1;i<=r.seats;i++){
+        const k=r.id+'-'+i, pid=seatMap[k], p=pid?getPerson(pid):null;
+        const tc=p?typeClass(p.type):'', chk=pid&&checkMap[pid]?'is-checked':'';
+        h+=`<div class="print-cell ${tc} ${chk}">
+          ${pid&&checkMap[pid]?`<div style="font-size:.52rem;color:var(--teal);margin-bottom:1px">✓ 참석확인</div>`:''}
+          ${p?`<div class="print-cell-name">${p.name}</div><div class="print-cell-org">${p.org}</div>`:''}
+        </div>`;
+      }
+      h+=`</div>`;
+    });
+    h+=`</div>`;
+  });
+  const u=getUnassigned();
+  if(u.length){
+    h+=`<div class="print-section"><div class="print-section-title">미배치 인원 (${u.length}명)</div><div style="display:flex;flex-wrap:wrap;gap:5px">`;
+    u.forEach(p=>{h+=`<div style="padding:4px 8px;background:var(--navy3);border-radius:6px;font-size:.7rem;color:var(--cream2)">${p.name}</div>`;});
+    h+=`</div></div>`;
+  }
+  document.getElementById('print-content').innerHTML=h;
+}
+
+/* ═══════════════════════════════════════════════
+   팝업 메뉴
+   ═══════════════════════════════════════════════ */
+function seatClick(e, k){
+  const pid=seatMap[k]; if(!pid) return;
+  e.stopPropagation();
+  const p=getPerson(pid);
+  if(popupKey===k && document.getElementById('seat-popup').classList.contains('show')){
+    closePopup(); return;
+  }
+  popupKey=k;
+  document.getElementById('sp-name').textContent=p.name;
+  document.getElementById('sp-check').textContent=checkMap[pid]?'✓ 참석확인 취소':'✓ 참석 확인';
+  const rect=e.currentTarget.getBoundingClientRect();
+  const popup=document.getElementById('seat-popup');
+  popup.classList.add('show');
+  const pw=popup.offsetWidth||150, ph=popup.offsetHeight||120;
+  const vw=window.innerWidth, vh=window.innerHeight;
+  let left=rect.left, top=rect.bottom+4;
+  if(left+pw>vw-8) left=vw-pw-8;
+  if(top+ph>vh-8)  top=rect.top-ph-4;
+  popup.style.left=Math.max(4,left)+'px';
+  popup.style.top=Math.max(4,top)+'px';
+}
+function closePopup(){
+  document.getElementById('seat-popup').classList.remove('show');
+  popupKey=null;
+}
+document.addEventListener('click', e=>{
+  const p=document.getElementById('seat-popup');
+  if(p.classList.contains('show')&&!p.contains(e.target)) closePopup();
+});
+async function popCheck(){
+  const k=popupKey; closePopup(); if(!k) return;
+  const pid=seatMap[k]; if(!pid) return;
+  const isNow=!checkMap[pid];
+  await pushCheck(pid, isNow||null);
+  updateStats(); renderChart();
+  showToast(isNow?`✓ ${getPerson(pid)?.name} 참석 확인`:`${getPerson(pid)?.name} 확인 취소`);
+}
+function popMemo(){const k=popupKey; closePopup(); doMemo(k);}
+function popRemove(){const k=popupKey; closePopup(); doRemove(k);}
+
+function doMemo(k){
+  if(!k) return;
+  const pid=seatMap[k]; if(!pid) return;
+  memoTarget=pid;
+  const p=getPerson(pid);
+  document.getElementById('memo-title').textContent=`메모 — ${p.name}`;
+  document.getElementById('memo-sub').textContent=`${k} · ${p.org}`;
+  document.getElementById('memo-textarea').value=memoMap[pid]||'';
+  document.getElementById('memo-modal').classList.add('show');
+  setTimeout(()=>document.getElementById('memo-textarea').focus(),100);
+}
+function doRemove(k){
+  if(!k) return;
+  const pid=seatMap[k]; if(!pid) return;
+  openConfirm('자리 제거',`"${getPerson(pid).name}"을(를) ${k} 자리에서 제거할까요?`, async()=>{
+    await pushSeat(k,null); render(); showToast(`${getPerson(pid)?.name} 제거됨`);
+  });
+}
+async function saveMemo(){
+  const text=document.getElementById('memo-textarea').value.trim();
+  if(memoTarget) await pushMemo(memoTarget, text||null);
+  closeMemo(); render(); showToast('메모 저장됨');
+}
+function closeMemo(){document.getElementById('memo-modal').classList.remove('show');memoTarget=null;}
+
+async function mobToggleCheck(pid,btn){
+  const isNow=!checkMap[pid];
+  await pushCheck(pid, isNow||null);
+  if(btn){
+    btn.className='mob-check-btn'+(isNow?' checked':'');
+    btn.textContent=isNow?'✓ 참석 확인됨 (탭하면 취소)':'⬜ 참석 확인하기';
+    const card=btn.closest('.mob-card');
+    if(card){
+      card.classList.toggle('is-checked',isNow);
+      const nm=card.querySelector('.mob-person-name');
+      if(nm){
+        const b=nm.querySelector('.mob-checked-badge');
+        if(isNow&&!b) nm.insertAdjacentHTML('beforeend','<span class="mob-checked-badge">✓ 참석확인</span>');
+        if(!isNow&&b) b.remove();
+      }
+    }
+  }
+  updateStats();
+  showToast(isNow?`${getPerson(pid)?.name} 참석 확인됨`:`${getPerson(pid)?.name} 확인 취소`);
+}
+
+/* ═══════════════════════════════════════════════
+   드래그앤드롭
+   ═══════════════════════════════════════════════ */
+function dragStart(e,k){
+  const pid=seatMap[k]; if(!pid){e.preventDefault();return;}
+  closePopup(); dragPid=pid; dragFrom=k; e.dataTransfer.effectAllowed='move';
+}
+function dragStartPanel(e,pid){dragPid=pid;dragFrom=null;e.dataTransfer.effectAllowed='move';}
+function dragOver(e,k){e.preventDefault();document.getElementById('s-'+k)?.classList.add('drag-over');}
+function dragLeave(e,k){document.getElementById('s-'+k)?.classList.remove('drag-over');}
+
+function dropToSeat(e,tk){
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('s-'+tk)?.classList.remove('drag-over');
+  if(!dragPid) return;
+
+  /* 1. 로컬 상태 즉시 업데이트 */
+  const ex=seatMap[tk];
+  if(dragFrom) seatMap[dragFrom]=ex||null;
+  seatMap[tk]=dragPid;
+  const movedPid=dragPid;
+  const fromKey=dragFrom;
+  dragPid=null; dragFrom=null;
+
+  /* 2. 화면 즉시 반영 */
+  render();
+  const el=document.getElementById('s-'+tk);
+  el?.classList.add('flash'); setTimeout(()=>el?.classList.remove('flash'),450);
+  showToast('자리를 이동했습니다');
+  saveLocal();
+
+  /* 3. Firebase 백그라운드 저장 */
+  _ignoreRemote=true;
+  const jobs=[];
+  if(fromKey) jobs.push(fbPut(`seats/${fromKey.replace(/-/g,'_')}`, ex||null));
+  jobs.push(fbPut(`seats/${tk.replace(/-/g,'_')}`, movedPid));
+  Promise.all(jobs).finally(()=>{ setTimeout(()=>{ _ignoreRemote=false; },800); });
+}
+
+function dropGlobal(e){
+  if(dragPid&&dragFrom){
+    seatMap[dragFrom]=null; saveLocal();
+    const k=dragFrom; const p=dragPid;
+    dragPid=null; dragFrom=null;
+    render(); showToast('제거됐습니다');
+    _ignoreRemote=true;
+    fbPut(`seats/${k.replace(/-/g,'_')}`, null)
+      .finally(()=>setTimeout(()=>{ _ignoreRemote=false; },800));
+  }
+}
+function dropToPanel(e){
+  e.preventDefault();
+  if(dragPid&&dragFrom){
+    seatMap[dragFrom]=null; saveLocal();
+    const k=dragFrom;
+    dragPid=null; dragFrom=null;
+    render(); showToast('미배치로 이동했습니다');
+    _ignoreRemote=true;
+    fbPut(`seats/${k.replace(/-/g,'_')}`, null)
+      .finally(()=>setTimeout(()=>{ _ignoreRemote=false; },800));
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   탭 / 유틸
+   ═══════════════════════════════════════════════ */
+function switchTab(tab){
+  closePopup(); currentTab=tab;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById(tab+'-view').classList.add('on');
+  document.getElementById('tab-'+tab).classList.add('on');
+  render();
+  if(tab==='mob') setTimeout(()=>document.getElementById('mob-search').focus(),300);
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove('show'),2300);
+}
+function openConfirm(title,msg,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-modal').classList.add('show');
+  document.getElementById('confirm-ok').onclick=()=>{closeConfirm();cb();};
+}
+function closeConfirm(){document.getElementById('confirm-modal').classList.remove('show');}
+function showQR(){
+  const url=APP_URL;
+  document.getElementById('qr-url').textContent=url;
+  const c=document.getElementById('qr-canvas'); c.innerHTML='';
+  try{new QRCode(c,{text:url,width:196,height:196,colorDark:'#1a2035',colorLight:'#f5f2ec'});}
+  catch(e){}
+  document.getElementById('qr-modal').classList.add('show');
+}
+function closeQR(){document.getElementById('qr-modal').classList.remove('show');}
+function doExport(){
+  let t=`2025 사람과디지털포럼 VIP 자리배치\n(${new Date().toLocaleString('ko-KR')})\n\n`;
+  ZONES.forEach(z=>{
+    t+=`[${z.label}]\n`;
+    z.rows.forEach(r=>{
+      const s=[];
+      for(let i=1;i<=r.seats;i++){const pid=seatMap[r.id+'-'+i];s.push(pid?getPerson(pid).name:'—');}
+      t+=r.id+': '+s.join(' | ')+'\n';
+    }); t+='\n';
+  });
+  t+=`[미배치]\n`; getUnassigned().forEach(p=>{t+=`• ${p.name}\n`;});
+  navigator.clipboard?.writeText(t).then(()=>showToast('클립보드에 복사됐습니다'));
+}
+function doReset(){
+  openConfirm('전체 초기화','모든 자리 배치, 참석확인, 메모를 초기화합니다.',async()=>{
+    allKeys().forEach(k=>seatMap[k]=null);
+    checkMap={}; memoMap={};
+    await pushAll(); render(); showToast('초기화 완료');
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   초기화 — 외부 스크립트 로딩 없이 즉시 실행
+   ═══════════════════════════════════════════════ */
+function setConn(s){
+  const dot=document.getElementById('conn-dot');
+  const label=document.getElementById('conn-label');
+  const badge=document.getElementById('badge-live');
+  if(s==='live'){dot.className='conn-dot live';label.textContent='실시간 동기화 중';label.className='live';badge.classList.add('show');}
+  else if(s==='offline'){dot.className='conn-dot err';label.textContent='오프라인 — 로컬 저장 사용 중';label.className='';}
+  else{dot.className='conn-dot';label.textContent='연결 중...';label.className='';}
+}
+
+async function init(){
+  /* 1단계: 즉시 빈 그리드 표시 */
+  allKeys().forEach(k=>seatMap[k]=null);
+  render();
+
+  /* 2단계: Firebase REST로 현재 데이터 가져오기 */
+  setConn('connecting');
+  const data = await fbGet();
+  if(data){ mergeData(data); saveLocal(); }
+  else { loadLocal(); }
+  render();
+  setConn('live');
+
+  /* 3단계: SSE로 실시간 변경사항 수신 */
+  fbListen(function(newData){
+    if(_ignoreRemote) return; /* 내가 방금 쓴 데이터가 되돌아오는 것은 무시 */
+    if(newData){ mergeData(newData); saveLocal(); render(); }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
