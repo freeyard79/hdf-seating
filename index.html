@@ -724,7 +724,7 @@ function renderChart(){
           <span class="seat-key">${k}</span>
           ${pid&&checkMap[pid]?`<span class="seat-check-icon"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></span>`:''}
           ${pid&&memoMap[pid]?`<span class="seat-memo-dot"></span>`:''}
-          ${p?`<span class="seat-nm">${p.name}</span><span class="seat-og">${p.org}</span>`:''}
+          ${p?`<span class="seat-nm">${p.type==='speaker'?'<span style="display:inline-block;background:rgba(253,203,110,.25);color:#fdcb6e;font-size:.55rem;font-weight:700;padding:0px 4px;border-radius:3px;margin-bottom:2px;line-height:1.6">연사</span><br>':''} ${p.name}</span><span class="seat-og">${p.org}</span>`:''}
         </div>`;
       }
       h+=`</div>`;
