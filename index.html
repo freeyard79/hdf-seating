@@ -408,19 +408,40 @@ async function fbGet(){
   }catch(e){return null;}
 }
 
-/* 롱폴링 — EventSource(SSE) 로 실시간 수신 */
+/* REST PATCH — 특정 경로의 값만 부분 업데이트 */
+async function fbPatch(path, data){
+  try{
+    await fetch(`${FB_URL}/${path}.json`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+  }catch(e){console.warn('fbPatch error',e);}
+}
+
+/* SSE 실시간 수신 — put/patch 이벤트를 경로별로 처리 */
 let evtSource = null;
 function fbListen(cb){
   if(evtSource) evtSource.close();
   evtSource = new EventSource(`${FB_URL}.json?accept=text/event-stream`);
+
   evtSource.addEventListener('put', function(e){
-    try{ const d=JSON.parse(e.data); cb(d.data); }catch(ex){}
+    try{
+      const d = JSON.parse(e.data);
+      /* path='/' → 전체 데이터 교체
+         path='/seats/A1_1' → 해당 자리만 업데이트
+         path='/check/p2'   → 해당 참석확인만 업데이트 */
+      cb(d.path, d.data);
+    }catch(ex){}
   });
+
   evtSource.addEventListener('patch', function(e){
-    try{ const d=JSON.parse(e.data); cb(null, d.data); }catch(ex){}
+    try{
+      const d = JSON.parse(e.data);
+      cb(d.path, d.data);
+    }catch(ex){}
   });
+
   evtSource.onerror = function(){
-    /* SSE 연결 끊기면 3초 후 재연결 */
     setTimeout(()=>fbListen(cb), 3000);
   };
   return evtSource;
@@ -549,10 +570,11 @@ function loadLocal(){
 }
 
 /* ═══════════════════════════════════════════════
-   Firebase 동기화
+   Firebase 동기화 — 경로 기반 부분 업데이트
    ═══════════════════════════════════════════════ */
-function mergeData(data){
-  /* 빈 DB면 현재 상태 유지 */
+
+/* 전체 데이터 한꺼번에 덮어쓰기 (초기 로드용) */
+function mergeAll(data){
   if(!data) return;
   allKeys().forEach(k=>{
     const rk=k.replace(/-/g,'_');
@@ -563,6 +585,74 @@ function mergeData(data){
     Object.keys(data.check).forEach(pid=>{if(data.check[pid]===true)checkMap[pid]=true;});
   }
   memoMap=(data.memo&&typeof data.memo==='object')?data.memo:{};
+}
+
+/* SSE 이벤트를 경로별로 처리 — 변경된 부분만 업데이트 */
+function applyRemote(path, data){
+  if(_ignoreRemote) return;
+
+  if(!path || path==='/'){ 
+    /* 전체 교체 (연결 직후 초기 put) */
+    mergeAll(data);
+    render(); return;
+  }
+
+  /* /seats/A1_1 → 해당 자리 하나만 업데이트 */
+  if(path.startsWith('/seats/')){
+    const rk = path.replace('/seats/','');
+    const k  = rk.replace(/_/g,'-');
+    if(seatMap.hasOwnProperty(k)){
+      seatMap[k] = data || null;
+      saveLocal(); render();
+    }
+    return;
+  }
+
+  /* /seats → seats 전체 교체 */
+  if(path==='/seats' || path==='seats'){
+    if(data&&typeof data==='object'){
+      allKeys().forEach(k=>{
+        const rk=k.replace(/-/g,'_');
+        seatMap[k]=data[rk]||null;
+      });
+    }
+    saveLocal(); render(); return;
+  }
+
+  /* /check/p2 → 해당 참석확인만 업데이트 */
+  if(path.startsWith('/check/')){
+    const pid=path.replace('/check/','');
+    if(data===true) checkMap[pid]=true;
+    else delete checkMap[pid];
+    saveLocal(); updateStats(); renderChart();
+    return;
+  }
+
+  /* /check → check 전체 교체 */
+  if(path==='/check' || path==='check'){
+    checkMap={};
+    if(data&&typeof data==='object'){
+      Object.keys(data).forEach(pid=>{if(data[pid]===true)checkMap[pid]=true;});
+    }
+    saveLocal(); updateStats(); renderChart(); return;
+  }
+
+  /* /memo/p2 → 해당 메모만 업데이트 */
+  if(path.startsWith('/memo/')){
+    const pid=path.replace('/memo/','');
+    if(data) memoMap[pid]=data;
+    else delete memoMap[pid];
+    saveLocal(); renderChart(); return;
+  }
+
+  /* /memo → memo 전체 교체 */
+  if(path==='/memo' || path==='memo'){
+    memoMap=(data&&typeof data==='object')?data:{};
+    saveLocal(); renderChart(); return;
+  }
+
+  /* 그 외 알 수 없는 경로 → 전체 다시 가져오기 */
+  fbGet().then(d=>{ if(d){ mergeAll(d); saveLocal(); render(); } });
 }
 
 /* 내가 직접 쓴 변경사항이 SSE로 되돌아올 때 무시하기 위한 플래그 */
@@ -973,15 +1063,14 @@ async function init(){
   /* 2단계: Firebase REST로 현재 데이터 가져오기 */
   setConn('connecting');
   const data = await fbGet();
-  if(data){ mergeData(data); saveLocal(); }
+  if(data){ mergeAll(data); saveLocal(); }
   else { loadLocal(); }
   render();
   setConn('live');
 
-  /* 3단계: SSE로 실시간 변경사항 수신 */
-  fbListen(function(newData){
-    if(_ignoreRemote) return; /* 내가 방금 쓴 데이터가 되돌아오는 것은 무시 */
-    if(newData){ mergeData(newData); saveLocal(); render(); }
+  /* 3단계: SSE로 실시간 변경사항 수신 — 경로 기반 부분 업데이트 */
+  fbListen(function(path, data){
+    applyRemote(path, data);
   });
 }
 
