@@ -20,8 +20,10 @@
      Speaker → 로즈/핑크  : 무대 활성, 발표자 구분
      Org     → 청록/민트  : 내부 운영진, 차분하게 구분  */
   --c-vip:#f6c90e;    --c-vip-bg:rgba(246,201,14,0.13);
+  --c-vvip:#ff6b6b;   --c-vvip-bg:rgba(255,107,107,0.15);
   --c-sp:#f472b6;     --c-sp-bg:rgba(244,114,182,0.13);
   --c-org:#2dd4bf;    --c-org-bg:rgba(45,212,191,0.13);
+  --c-un:#adb5c6;     --c-un-bg:rgba(173,181,198,0.12);
   --c-chk-bg:rgba(0,184,148,0.15);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -61,9 +63,11 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
 .seat.empty{cursor:default}
 .seat.has-person:hover{border-color:var(--border2);background:var(--navy3)}
 .seat.drag-over{border:1.5px dashed var(--violet)!important;background:rgba(108,92,231,0.12)!important}
-.seat.t-vip    {background:var(--c-vip-bg);border-color:rgba(162,155,254,.3)}
-.seat.t-speaker{background:var(--c-sp-bg); border-color:rgba(253,203,110,.3)}
-.seat.t-org    {background:var(--c-org-bg);border-color:rgba(116,185,255,.3)}
+.seat.t-vip       {background:var(--c-vip-bg); border-color:rgba(246,201,14,.35)}
+.seat.t-vvip      {background:var(--c-vvip-bg);border-color:rgba(255,107,107,.5)}
+.seat.t-speaker   {background:var(--c-sp-bg);  border-color:rgba(244,114,182,.35)}
+.seat.t-org       {background:var(--c-org-bg); border-color:rgba(45,212,191,.35)}
+.seat.t-unassigned{background:var(--c-un-bg);  border-color:rgba(173,181,198,.3)}
 .seat.is-checked{outline:2px solid var(--teal);outline-offset:-2px}
 .seat.flash{animation:flash-anim .45s ease}
 @keyframes flash-anim{0%,100%{opacity:1}50%{opacity:.35;background:rgba(108,92,231,.3)}}
@@ -125,15 +129,19 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
 .pcard{padding:5px 7px;border-radius:7px;border:1px solid var(--border);background:var(--navy);cursor:grab;user-select:none;transition:border-color .1s,background .1s}
 .pcard:hover{background:var(--navy3);border-color:var(--border2)}
 .pcard:active{cursor:grabbing}
-.pcard.t-vip    {border-left:2px solid var(--c-vip)}
-.pcard.t-speaker{border-left:2px solid var(--c-sp)}
-.pcard.t-org    {border-left:2px solid var(--c-org)}
+.pcard.t-vip       {border-left:2px solid var(--c-vip)}
+.pcard.t-vvip      {border-left:2px solid var(--c-vvip)}
+.pcard.t-speaker   {border-left:2px solid var(--c-sp)}
+.pcard.t-org       {border-left:2px solid var(--c-org)}
+.pcard.t-unassigned{border-left:2px solid var(--c-un)}
 .pcard-nm{font-size:.76rem;font-weight:600;color:var(--cream)}
 .pcard-og{font-size:.63rem;color:var(--gray2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
 .role-badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.58rem;font-weight:700;margin-right:3px;vertical-align:1px}
-.rb-vip    {background:var(--c-vip-bg);color:var(--c-vip)}
-.rb-speaker{background:var(--c-sp-bg); color:var(--c-sp)}
-.rb-org    {background:var(--c-org-bg);color:var(--c-org)}
+.rb-vip       {background:var(--c-vip-bg); color:var(--c-vip)}
+.rb-vvip      {background:var(--c-vvip-bg);color:var(--c-vvip)}
+.rb-speaker   {background:var(--c-sp-bg);  color:var(--c-sp)}
+.rb-org       {background:var(--c-org-bg); color:var(--c-org)}
+.rb-unassigned{background:var(--c-un-bg);  color:var(--c-un)}
 .desk-actions{display:flex;gap:5px;padding:.45rem .65rem;border-top:1px solid var(--border);background:var(--navy);flex-shrink:0}
 .btn-act{flex:1;padding:.42rem;background:var(--navy3);border:1px solid var(--border2);border-radius:8px;color:var(--cream2);font-size:.7rem;cursor:pointer;text-align:center;transition:border-color .15s,color .15s;white-space:nowrap}
 .btn-act:hover{border-color:var(--violet);color:var(--c-vip)}
@@ -301,9 +309,11 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
   </div>
 </div>
 <div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:#f6c90e"></div>VIP <span style="font-size:.6rem;color:var(--gray)">(골드)</span></div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div>연사 <span style="font-size:.6rem;color:var(--gray)">(핑크)</span></div>
-  <div class="legend-item"><div class="legend-dot" style="background:#2dd4bf"></div>주최 <span style="font-size:.6rem;color:var(--gray)">(민트)</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ff6b6b"></div>VVIP</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f6c90e"></div>VIP</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div>연사</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#2dd4bf"></div>주최</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#adb5c6"></div>미배정</div>
   <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>참석확인</div>
   <div class="legend-item" style="gap:5px">
     <div style="width:12px;height:12px;border-radius:3px;background:rgba(251,146,60,.3);border:1px solid rgba(251,146,60,.7);flex-shrink:0"></div>
@@ -453,39 +463,152 @@ function fbListen(cb){
 }
 
 /* ═══════════════════════════════════════════════
-   데이터
+   Google Sheets 자동 연동
+   새 시트: 1SwOxpV7GTjoPPmPPrB-ktwqW54VuAwn8d5dlF_l90FU
+   gid=0 (2026_speakers&VIP)
    ═══════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════
-   2026 제5회 사람과디지털포럼
-   2026_Speaker&VIP 시트 기준 (18명)
-   ═══════════════════════════════════════════════ */
-const PEOPLE = [
-  /* Organizer */
-  {id:'p1', name:'박찬수',           org:'한겨레신문사 대표',                    type:'org'},
-  {id:'p2', name:'조현경',           org:'한겨레경제사회연구원 원장',              type:'org'},
-  {id:'p3', name:'이창곤',           org:'우분투재단 이사장',                    type:'org'},
+const SHEET_ID  = '1SwOxpV7GTjoPPmPPrB-ktwqW54VuAwn8d5dlF_l90FU';
+const SHEET_GID = '0';
+const SHEET_CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+const SHEET_REFRESH_MS = 5 * 60 * 1000; /* 5분마다 자동 갱신 */
 
-  /* Speaker */
-  {id:'p4', name:'칼 베네딕트 프레이', org:'영국 옥스퍼드대 미래노동프로그램 창립디렉터', type:'speaker'},
-  {id:'p5', name:'세라 오코너',       org:'파이낸셜타임스 부편집인',               type:'speaker'},
-  {id:'p6', name:'이상헌',           org:'국제노동기구(ILO) 수석 이코노미스트',    type:'speaker'},
-  {id:'p7', name:'장지연',           org:'한국노동연구원 선임연구위원',            type:'speaker'},
-  {id:'p8', name:'박영선',           org:'전략경제자문단 위원장',                 type:'speaker'},
-  {id:'p9', name:'음성원',           org:'오픈AI코리아 커뮤니케이션 총괄',         type:'speaker'},
-  {id:'p10',name:'홍성준',           org:'뱅크샐러드 최고디자인책임자(CDO)',       type:'speaker'},
-  {id:'p11',name:'이덕만',           org:'포스코홀딩스 AI로봇융합연구소 지능화연구센터장', type:'speaker'},
-  {id:'p12',name:'유재연',           org:'국가AI전략위 사회분과장',               type:'speaker'},
-  {id:'p13',name:'김희삼',           org:'광주과학기술원(GIST) 교수',            type:'speaker'},
-  {id:'p14',name:'구본권',           org:'디지털 인문학자',                      type:'speaker'},
-  {id:'p15',name:'박숙자',           org:'서강대 전인교육원 교수',               type:'speaker'},
-  {id:'p16',name:'이범',             org:'교육평론가',                          type:'speaker'},
-  {id:'p17',name:'이수정',           org:'성신여고 영어과 교사',                 type:'speaker'},
+/* 역할 → type 변환 (제로폭공백·특수공백 모두 제거) */
+function parseRole(raw){
+  const r = (raw||'').replace(/[\u200b\u200c\u200d\u00a0\s]/g,'').toUpperCase();
+  if(r==='ORGANIZER') return 'org';
+  if(r==='VVIP')      return 'vvip';
+  if(r==='VIP')       return 'vip';
+  if(r==='SPEAKER')   return 'speaker';
+  return 'unassigned';
+}
 
-  /* VIP */
-  {id:'p18',name:'조정식',           org:'국회의장',                           type:'vip'},
-  {id:'p19',name:'김지형',           org:'경제사회노동위원회 위원장',             type:'vip'},
-  {id:'p20',name:'오연호',           org:'오마이뉴스 대표',                     type:'vip'},
+/* CSV 한 줄 파싱 */
+function parseCSVRow(line){
+  const cols=[];
+  let cur='', inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){
+      if(inQ&&line[i+1]==='"'){cur+='"';i++;}
+      else inQ=!inQ;
+    } else if(c===','&&!inQ){
+      cols.push(cur);cur='';
+    } else { cur+=c; }
+  }
+  cols.push(cur);
+  return cols;
+}
+
+/* CSV 전체 → PEOPLE 배열
+   A=역할, B=성명(국문), C=배치번호, D=성명(영문), E=소속(국문) */
+function parseSheetCSV(csv){
+  const lines=csv.split('\n');
+  const people=[];
+  let idx=1;
+  for(let i=1;i<lines.length;i++){
+    const line=lines[i].replace(/\r/g,'');
+    const cols=parseCSVRow(line);
+    const name=(cols[1]||'').replace(/[\u200b\u200c\u200d\u00a0]/g,'').trim();
+    if(!name) continue;
+    const org=(cols[4]||'').replace(/\n/g,' ').replace(/[\u200b\u200c\u200d\u00a0]/g,'').trim();
+    const type=parseRole(cols[0]||'');
+    people.push({id:'p'+idx, name, org, type});
+    idx++;
+  }
+  return people;
+}
+
+/* 폴백 데이터 — 시트 로드 실패 시 */
+const PEOPLE_FALLBACK = [
+  {id:'p1', name:'박찬수',           org:'한겨레신문사 대표',                         type:'org'},
+  {id:'p2', name:'조정식',           org:'국회의장',                                 type:'vvip'},
+  {id:'p3', name:'김지형',           org:'경제사회노동위원회 위원장',                    type:'vvip'},
+  {id:'p4', name:'칼 베네딕트 프레이',  org:'영국 옥스퍼드대 교수',                        type:'speaker'},
+  {id:'p5', name:'세라 오코너',       org:'파이낸셜타임스 부편집인',                      type:'speaker'},
+  {id:'p6', name:'이상헌',           org:'국제노동기구(ILO) 수석 이코노미스트',           type:'unassigned'},
+  {id:'p7', name:'장지연',           org:'한국노동연구원 선임연구위원',                   type:'unassigned'},
+  {id:'p8', name:'박영선',           org:'전략경제자문단 위원장',                        type:'unassigned'},
+  {id:'p9', name:'음성원',           org:'오픈AI코리아 커뮤니케이션 총괄',               type:'unassigned'},
+  {id:'p10',name:'홍성준',           org:'뱅크샐러드 디자인 총괄 이사',                  type:'unassigned'},
+  {id:'p11',name:'이덕만',           org:'포스코홀딩스 AI로봇융합연구소 지능화연구센터장',  type:'unassigned'},
+  {id:'p12',name:'유재연',           org:'국가AI전략위 사회분과장',                      type:'unassigned'},
+  {id:'p13',name:'김희삼',           org:'광주과학기술원(GIST) 교수',                   type:'unassigned'},
+  {id:'p14',name:'구본권',           org:'디지털 인문학자',                             type:'unassigned'},
+  {id:'p15',name:'박숙자',           org:'서강대 전인교육원 교수',                       type:'unassigned'},
+  {id:'p16',name:'이범',             org:'교육평론가',                                 type:'unassigned'},
+  {id:'p17',name:'이수정',           org:'성신여고 영어과 교사',                         type:'unassigned'},
+  {id:'p18',name:'조현경',           org:'한겨레경제사회연구원 원장',                     type:'org'},
+  {id:'p19',name:'오연호',           org:'오마이뉴스 대표',                             type:'unassigned'},
+  {id:'p20',name:'이창곤',           org:'우분투재단 이사장',                           type:'unassigned'},
 ];
+
+let PEOPLE = [];
+
+/* 시트 로드 함수 — 실패 시 폴백 즉시 적용 */
+async function loadPeopleFromSheet(silent=false){
+  /* 로컬 파일(file://)에서는 fetch 불가 → 즉시 폴백 */
+  if(location.protocol === 'file:'){
+    if(PEOPLE.length === 0){
+      PEOPLE = PEOPLE_FALLBACK;
+      if(!silent) updateSheetBadge(false, PEOPLE.length);
+    }
+    return false;
+  }
+
+  try{
+    const res=await fetch(SHEET_CSV+'&t='+Date.now());
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const csv=await res.text();
+    const parsed=parseSheetCSV(csv);
+    if(parsed.length===0) throw new Error('0명 파싱됨');
+
+    const oldNames=PEOPLE.map(p=>p.name+p.type).join(',');
+    const newNames=parsed.map(p=>p.name+p.type).join(',');
+    const changed = oldNames !== newNames;
+
+    PEOPLE=parsed;
+    if(!silent) updateSheetBadge(true, parsed.length);
+    if(changed){
+      render();
+      if(!silent) showToast(`📋 시트 업데이트 반영: ${PEOPLE.length}명`);
+    }
+    return true;
+  }catch(e){
+    console.warn('시트 로드 실패:', e.message);
+    if(PEOPLE.length===0) PEOPLE=PEOPLE_FALLBACK;
+    if(!silent) updateSheetBadge(false, PEOPLE.length);
+    return false;
+  }
+}
+
+/* 상단 배지 업데이트 */
+function updateSheetBadge(ok, count){
+  let badge=document.getElementById('sheet-badge');
+  if(!badge){
+    badge=document.createElement('span');
+    badge.id='sheet-badge';
+    badge.style.cssText='font-size:.63rem;padding:1px 7px;border-radius:10px;font-weight:600;';
+    const cr=document.querySelector('.conn-right');
+    if(cr) cr.prepend(badge);
+  }
+  if(ok){
+    badge.style.background='rgba(45,212,191,.15)';
+    badge.style.color='#2dd4bf';
+    badge.textContent=`📋 시트연동 ${count}명`;
+  } else {
+    badge.style.background='rgba(173,181,198,.15)';
+    badge.style.color='#adb5c6';
+    badge.textContent='📋 폴백데이터';
+  }
+}
+
+/* 5분마다 자동 갱신 + 탭 활성화 시 갱신 */
+function startSheetAutoRefresh(){
+  setInterval(()=>loadPeopleFromSheet(false), SHEET_REFRESH_MS);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible') loadPeopleFromSheet(false);
+  });
+}
 
 const ZONES = [
   {label:'A구역 (앞 — 무대 인접)', rows:[
@@ -527,11 +650,20 @@ function getUnassigned(f=''){
   return PEOPLE.filter(p=>!a.has(p.id)&&(!f||p.name.includes(f)));
 }
 function getSeatOf(pid){return Object.keys(seatMap).find(k=>seatMap[k]===pid)}
-function typeClass(t){return t==='vip'?'t-vip':t==='speaker'?'t-speaker':t==='org'?'t-org':''}
+function typeClass(t){
+  if(t==='vvip')       return 't-vvip';
+  if(t==='vip')        return 't-vip';
+  if(t==='speaker')    return 't-speaker';
+  if(t==='org')        return 't-org';
+  if(t==='unassigned') return 't-unassigned';
+  return '';
+}
 function roleLabel(t){
-  if(t==='vip')     return '<span class="role-badge rb-vip">VIP</span>';
-  if(t==='speaker') return '<span class="role-badge rb-speaker">연사</span>';
-  if(t==='org')     return '<span class="role-badge rb-org">주최</span>';
+  if(t==='vvip')       return '<span class="role-badge rb-vvip">VVIP</span>';
+  if(t==='vip')        return '<span class="role-badge rb-vip">VIP</span>';
+  if(t==='speaker')    return '<span class="role-badge rb-speaker">연사</span>';
+  if(t==='org')        return '<span class="role-badge rb-org">주최</span>';
+  if(t==='unassigned') return '<span class="role-badge rb-unassigned">미배정</span>';
   return '';
 }
 function getZoneDesc(key){
@@ -713,7 +845,7 @@ function renderChart(){
           <span class="seat-key">${k}</span>
           ${pid&&checkMap[pid]?`<span class="seat-check-icon"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></span>`:''}
           ${pid&&memoMap[pid]?`<span class="seat-memo-dot"></span>`:''}
-          ${p?`<span class="seat-nm">${p.type==='speaker'?'<span style="display:inline-block;background:rgba(253,203,110,.25);color:#fdcb6e;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">연사</span>':''}${p.name}</span><span class="seat-og">${p.org}</span>`:''}
+          ${p?`<span class="seat-nm">${p.type==='speaker'?'<span style="display:inline-block;background:rgba(244,114,182,.22);color:#f472b6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">연사</span>':p.type==='vvip'?'<span style="display:inline-block;background:rgba(255,107,107,.28);color:#ff6b6b;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">VVIP</span>':p.type==='unassigned'?'<span style="display:inline-block;background:rgba(173,181,198,.22);color:#adb5c6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">미배정</span>':\'\'}${p.name}</span><span class="seat-og">${p.org}</span>`:''}
         </div>`;
       }
       h+=`</div>`;
@@ -1046,22 +1178,32 @@ function setConn(s){
 }
 
 async function init(){
-  /* 1단계: 즉시 빈 그리드 표시 */
+  /* 1단계: 폴백 데이터로 즉시 그리드 표시 (빈 화면 방지) */
+  PEOPLE = PEOPLE_FALLBACK;
   allKeys().forEach(k=>seatMap[k]=null);
   render();
 
-  /* 2단계: Firebase REST로 현재 데이터 가져오기 */
+  /* 2단계: Google Sheets 명단 로드 시도 */
   setConn('connecting');
+  await loadPeopleFromSheet(false);
+  render(); /* 시트 로드 결과 반영 */
+
+  /* 3단계: Firebase 자리 배치 데이터 로드 */
   const data = await fbGet();
   if(data){ mergeAll(data); saveLocal(); }
   else { loadLocal(); }
   render();
   setConn('live');
 
-  /* 3단계: SSE로 실시간 변경사항 수신 — 경로 기반 부분 업데이트 */
+  /* 4단계: SSE 실시간 동기화 */
   fbListen(function(path, data){
     applyRemote(path, data);
   });
+
+  /* 5단계: 시트 자동 갱신 (GitHub Pages 환경에서만) */
+  if(location.protocol !== 'file:'){
+    startSheetAutoRefresh();
+  }
 }
 
 init();
