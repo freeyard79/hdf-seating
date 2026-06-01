@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>HDF 2025 · VIP 자리배치</title>
+<title>HDF 2026 · VIP 자리배치</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
@@ -14,9 +14,14 @@
   --amber:#e17d2c;--teal:#00b894;--rose:#e84393;
   --gray:#8892a4;--gray2:#adb5c6;
   --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
-  --c-vip:#a29bfe;--c-vip-bg:rgba(162,155,254,0.15);
-  --c-sp:#fdcb6e; --c-sp-bg:rgba(253,203,110,0.15);
-  --c-org:#74b9ff;--c-org-bg:rgba(116,185,255,0.15);
+
+  /* 역할별 색상
+     VIP     → 골드/앰버  : 중요도 최상위, 눈에 잘 띔
+     Speaker → 로즈/핑크  : 무대 활성, 발표자 구분
+     Org     → 청록/민트  : 내부 운영진, 차분하게 구분  */
+  --c-vip:#f6c90e;    --c-vip-bg:rgba(246,201,14,0.13);
+  --c-sp:#f472b6;     --c-sp-bg:rgba(244,114,182,0.13);
+  --c-org:#2dd4bf;    --c-org-bg:rgba(45,212,191,0.13);
   --c-chk-bg:rgba(0,184,148,0.15);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -63,35 +68,35 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
 .seat.flash{animation:flash-anim .45s ease}
 @keyframes flash-anim{0%,100%{opacity:1}50%{opacity:.35;background:rgba(108,92,231,.3)}}
 
-/* VVIP / VIP+ 행 구분 */
+/* VVIP / VIP+ 행 구분 배지 */
 .row-grade-badge{
   font-size:.52rem;font-weight:700;letter-spacing:.04em;
   padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;
 }
-.badge-vvip {background:rgba(232,67,147,.25);color:#ff7eb3}
-.badge-vip-plus{background:rgba(253,203,110,.2);color:#fdcb6e}
+.badge-vvip    {background:rgba(246,201,14,.3); color:#f6c90e}
+.badge-vip-plus{background:rgba(251,146,60,.25);color:#fb923c}
 
-/* VVIP 자리 — 핫핑크 테두리 + 미묘한 배경 */
+/* VVIP 구역 — 딥골드 테두리 (최고 중요도) */
 .seat.zone-vvip{
-  border-color:rgba(232,67,147,.5)!important;
-  background:rgba(232,67,147,.08)!important;
-  box-shadow:inset 0 0 0 1px rgba(232,67,147,.2);
+  border-color:rgba(246,201,14,.6)!important;
+  background:rgba(246,201,14,.08)!important;
+  box-shadow:inset 0 0 0 1px rgba(246,201,14,.25);
 }
-.seat.zone-vvip.t-vip    {background:rgba(232,67,147,.15)!important}
-.seat.zone-vvip.t-speaker{background:rgba(232,67,147,.12)!important}
-.seat.zone-vvip.t-org    {background:rgba(232,67,147,.12)!important}
-.seat.zone-vvip.empty    {border-color:rgba(232,67,147,.3)!important}
+.seat.zone-vvip.t-vip    {background:rgba(246,201,14,.16)!important}
+.seat.zone-vvip.t-speaker{background:rgba(246,201,14,.13)!important}
+.seat.zone-vvip.t-org    {background:rgba(246,201,14,.13)!important}
+.seat.zone-vvip.empty    {border-color:rgba(246,201,14,.3)!important}
 
-/* VIP+ 자리 — 앰버 테두리 */
+/* VIP+ 구역 — 오렌지 테두리 */
 .seat.zone-vip-plus{
-  border-color:rgba(225,125,44,.45)!important;
-  background:rgba(225,125,44,.07)!important;
-  box-shadow:inset 0 0 0 1px rgba(225,125,44,.18);
+  border-color:rgba(251,146,60,.55)!important;
+  background:rgba(251,146,60,.07)!important;
+  box-shadow:inset 0 0 0 1px rgba(251,146,60,.2);
 }
-.seat.zone-vip-plus.t-vip    {background:rgba(225,125,44,.14)!important}
-.seat.zone-vip-plus.t-speaker{background:rgba(225,125,44,.12)!important}
-.seat.zone-vip-plus.t-org    {background:rgba(225,125,44,.12)!important}
-.seat.zone-vip-plus.empty    {border-color:rgba(225,125,44,.25)!important}
+.seat.zone-vip-plus.t-vip    {background:rgba(251,146,60,.14)!important}
+.seat.zone-vip-plus.t-speaker{background:rgba(251,146,60,.12)!important}
+.seat.zone-vip-plus.t-org    {background:rgba(251,146,60,.12)!important}
+.seat.zone-vip-plus.empty    {border-color:rgba(251,146,60,.28)!important}
 .seat-key{position:absolute;top:2px;right:3px;font-size:.56rem;color:var(--gray);opacity:.55;pointer-events:none}
 .seat-check-icon{position:absolute;top:2px;left:3px;width:12px;height:12px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .seat-check-icon svg{width:8px;height:8px;stroke:#fff;stroke-width:2.5;fill:none}
@@ -292,21 +297,21 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
   <span id="conn-label">시작 중...</span>
   <div class="conn-right">
     <span class="badge-live" id="badge-live">● LIVE</span>
-    <span style="font-size:.7rem;color:var(--gray)">2025 사람과디지털포럼</span>
+    <span style="font-size:.7rem;color:var(--gray)">2026 사람과디지털포럼</span>
   </div>
 </div>
 <div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:var(--c-vip)"></div>VIP</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--c-sp)"></div>연사</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--c-org)"></div>주최</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f6c90e"></div>VIP <span style="font-size:.6rem;color:var(--gray)">(골드)</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div>연사 <span style="font-size:.6rem;color:var(--gray)">(핑크)</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#2dd4bf"></div>주최 <span style="font-size:.6rem;color:var(--gray)">(민트)</span></div>
   <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>참석확인</div>
   <div class="legend-item" style="gap:5px">
-    <div style="width:12px;height:12px;border-radius:3px;background:rgba(225,125,44,.3);border:1px solid rgba(225,125,44,.6);flex-shrink:0"></div>
-    <span>VIP+</span>
+    <div style="width:12px;height:12px;border-radius:3px;background:rgba(251,146,60,.3);border:1px solid rgba(251,146,60,.7);flex-shrink:0"></div>
+    <span>VIP+ 구역</span>
   </div>
   <div class="legend-item" style="gap:5px">
-    <div style="width:12px;height:12px;border-radius:3px;background:rgba(232,67,147,.25);border:1px solid rgba(232,67,147,.6);flex-shrink:0"></div>
-    <span>VVIP</span>
+    <div style="width:12px;height:12px;border-radius:3px;background:rgba(246,201,14,.25);border:1px solid rgba(246,201,14,.8);flex-shrink:0"></div>
+    <span>VVIP 구역</span>
   </div>
   <div class="legend-hint">클릭 → 메뉴 | 드래그 → 자리 이동</div>
 </div>
@@ -327,7 +332,7 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
 
 <div class="view on" id="desk-view">
   <div class="stats-bar">
-    <div class="stat-item"><div class="stat-n">50</div><div class="stat-l">전체</div></div>
+    <div class="stat-item"><div class="stat-n" id="st-total">0</div><div class="stat-l">전체</div></div>
     <div class="stat-item"><div class="stat-n" id="st-done" style="color:var(--teal)">0</div><div class="stat-l">배치완료</div></div>
     <div class="stat-item"><div class="stat-n" id="st-checked" style="color:var(--c-vip)">0</div><div class="stat-l">참석확인</div></div>
     <div class="stat-item"><div class="stat-n" id="st-left" style="color:var(--amber)">0</div><div class="stat-l">미배치</div></div>
@@ -387,7 +392,7 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
    Firebase REST API — SDK 없이 직접 통신
    외부 스크립트 로딩 없음 → 타이밍 문제 제로
    ═══════════════════════════════════════════════ */
-const FB_URL  = 'https://hdf-vip-seat-plan-default-rtdb.firebaseio.com/hdf2025v4';
+const FB_URL  = 'https://hdf-vip-seat-plan-default-rtdb.firebaseio.com/hdf2026v1';
 const APP_URL = location.href.split('?')[0];
 
 /* REST PUT — 특정 경로에 값 저장 */
@@ -450,67 +455,51 @@ function fbListen(cb){
 /* ═══════════════════════════════════════════════
    데이터
    ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   2026 제5회 사람과디지털포럼
+   2026_Speaker&VIP 시트 기준 (18명)
+   ═══════════════════════════════════════════════ */
 const PEOPLE = [
-  {id:'p1', name:'최우성',          org:'한겨레신문사 대표',                   type:'org'},
-  {id:'p2', name:'이학영',          org:'국회부의장',                         type:'vip'},
-  {id:'p3', name:'최형두',          org:'국회의원 · 과학기술정보방송통신위',      type:'vip'},
-  {id:'p4', name:'김우영',          org:'국회의원 · 과학기술정보방송통신위',      type:'vip'},
-  {id:'p5', name:'조승래',          org:'국회의원 · 기획재정위원회',             type:'vip'},
-  {id:'p6', name:'야엘 아이젠스타트', org:'민주주의를 위한 사이버보안 이사',       type:'speaker'},
-  {id:'p7', name:'마티아스 슈필캄프', org:'알고리즘워치 이사 · 공동창립자',       type:'speaker'},
-  {id:'p8', name:'박원호',          org:'서울대 정치외교학부 교수',              type:'speaker'},
-  {id:'p9', name:'이해민',          org:'조국혁신당 국회의원',                  type:'speaker'},
-  {id:'p10',name:'강정한',          org:'연세대 사회학과 교수',                 type:'speaker'},
-  {id:'p11',name:'유승현',          org:'한양대 언론정보대학원 겸임교수',         type:'speaker'},
-  {id:'p12',name:'황용석',          org:'건국대 미디어커뮤니케이션학과 교수',      type:'speaker'},
-  {id:'p13',name:'장여경',          org:'정보인권연구소 상임이사',               type:'speaker'},
-  {id:'p14',name:'강정수',          org:'블루닷AI연구센터 센터장',               type:'speaker'},
-  {id:'p15',name:'류이근',          org:'한겨레경제사회연구원장',                type:'org'},
-  {id:'p16',name:'윤종수',          org:'법무법인 광장 파트너',                 type:'vip'},
-  {id:'p17',name:'이상윤',          org:'성공회대학교 교수',                    type:'vip'},
-  {id:'p18',name:'이창현',          org:'국민대 미디어광고학부 교수',             type:'vip'},
-  {id:'p19',name:'이원태',          org:'국민대학교 특임교수',                  type:'vip'},
-  {id:'p20',name:'전치형',          org:'카이스트 과학기술정책대학원 교수',        type:'vip'},
-  {id:'p21',name:'이종욱',          org:'서울과학기술대학교 교수',               type:'vip'},
-  {id:'p22',name:'장혜영',          org:'민주노동당 마포구위원회 지역위원장',      type:'vip'},
-  {id:'p23',name:'이정환',          org:'슬로우뉴스 대표',                     type:'vip'},
-  {id:'p24',name:'김춘이',          org:'기후생태연대 대표',                    type:'vip'},
-  {id:'p25',name:'윤경효',          org:'한국지속가능발전센터 이사',              type:'vip'},
-  {id:'p26',name:'이승윤',          org:'중앙대학교 교수',                     type:'vip'},
-  {id:'p27',name:'김준수',          org:'비바리퍼블리카 홍보실장',               type:'vip'},
-  {id:'p28',name:'오준호',          org:'기본소득정책연구소 소장',               type:'vip'},
-  {id:'p29',name:'김완희',          org:'가천대학교 교수',                     type:'vip'},
-  {id:'p30',name:'김현미',          org:'연세대 문화인류학과 교수',              type:'vip'},
-  {id:'p31',name:'송경용',          org:'한국노동재단 공동이사장',               type:'vip'},
-  {id:'p32',name:'윤정숙',          org:'전 녹색연합 공동대표',                 type:'vip'},
-  {id:'p33',name:'김기영',          org:'대산농촌재단 이사장',                  type:'vip'},
-  {id:'p34',name:'조영준',          org:'대한상공회의소 지속가능경영원장',         type:'vip'},
-  {id:'p35',name:'홍일표',          org:'국회입법조사처 사회문화조사실장',         type:'vip'},
-  {id:'p36',name:'장영승',          org:'에피카 CSO',                        type:'vip'},
-  {id:'p37',name:'이원재',          org:'LAB2050 이사장',                    type:'vip'},
-  {id:'p38',name:'곽금순',          org:'한살림재단 이사장',                    type:'vip'},
-  {id:'p39',name:'장지연',          org:'한국사회가치연대기금 사무총장',           type:'vip'},
-  {id:'p40',name:'안소영',          org:'LG AI연구원 정책수석',                type:'vip'},
-  {id:'p41',name:'안미현',          org:'한국자활복지개발원 자활연수원장',         type:'vip'},
-  {id:'p42',name:'권태선',          org:'방송문화진흥회 이사장',                 type:'vip'},
-  {id:'p43',name:'김병철',          org:'방송문화진흥회 이사',                  type:'vip'},
-  {id:'p44',name:'박진도',          org:'국민총행복전환포럼 이사장',              type:'vip'},
-  {id:'p45',name:'박재연',          org:'아주대학교 교수',                     type:'vip'},
-  {id:'p46',name:'조현경',          org:'한겨레경제사회연구원 부원장',            type:'org'},
-  {id:'p47',name:'이주현',          org:'한겨레신문사 뉴스룸 국장',              type:'org'},
-  {id:'p48',name:'장덕남',          org:'한겨레신문사 광고국장',                type:'org'},
-  {id:'p49',name:'안재승',          org:'한겨레신문사 전무',                    type:'org'},
-  {id:'p50',name:'송호진',          org:'한겨레신문사 전략마케팅본부',            type:'org'},
+  /* Organizer */
+  {id:'p1', name:'박찬수',           org:'한겨레신문사 대표',                    type:'org'},
+  {id:'p2', name:'조현경',           org:'한겨레경제사회연구원 원장',              type:'org'},
+  {id:'p3', name:'이창곤',           org:'우분투재단 이사장',                    type:'org'},
+
+  /* Speaker */
+  {id:'p4', name:'칼 베네딕트 프레이', org:'영국 옥스퍼드대 미래노동프로그램 창립디렉터', type:'speaker'},
+  {id:'p5', name:'세라 오코너',       org:'파이낸셜타임스 부편집인',               type:'speaker'},
+  {id:'p6', name:'이상헌',           org:'국제노동기구(ILO) 수석 이코노미스트',    type:'speaker'},
+  {id:'p7', name:'장지연',           org:'한국노동연구원 선임연구위원',            type:'speaker'},
+  {id:'p8', name:'박영선',           org:'전략경제자문단 위원장',                 type:'speaker'},
+  {id:'p9', name:'음성원',           org:'오픈AI코리아 커뮤니케이션 총괄',         type:'speaker'},
+  {id:'p10',name:'홍성준',           org:'뱅크샐러드 최고디자인책임자(CDO)',       type:'speaker'},
+  {id:'p11',name:'이덕만',           org:'포스코홀딩스 AI로봇융합연구소 지능화연구센터장', type:'speaker'},
+  {id:'p12',name:'유재연',           org:'국가AI전략위 사회분과장',               type:'speaker'},
+  {id:'p13',name:'김희삼',           org:'광주과학기술원(GIST) 교수',            type:'speaker'},
+  {id:'p14',name:'구본권',           org:'디지털 인문학자',                      type:'speaker'},
+  {id:'p15',name:'박숙자',           org:'서강대 전인교육원 교수',               type:'speaker'},
+  {id:'p16',name:'이범',             org:'교육평론가',                          type:'speaker'},
+  {id:'p17',name:'이수정',           org:'성신여고 영어과 교사',                 type:'speaker'},
+
+  /* VIP */
+  {id:'p18',name:'조정식',           org:'국회의장',                           type:'vip'},
+  {id:'p19',name:'김지형',           org:'경제사회노동위원회 위원장',             type:'vip'},
+  {id:'p20',name:'오연호',           org:'오마이뉴스 대표',                     type:'vip'},
 ];
+
 const ZONES = [
   {label:'A구역 (앞 — 무대 인접)', rows:[
-    {id:'A1',seats:7},
-    {id:'A2',seats:7, grade:'vip_plus'},
-    {id:'A3',seats:7, grade:'vvip'},
-    {id:'A4',seats:7},
+    {id:'A1', seats:8},
+    {id:'A2', seats:8, grade:'vip_plus'},
+    {id:'A3', seats:8, grade:'vvip'},
+    {id:'A4', seats:8},
   ]},
   {label:'B구역 (뒤)', rows:[
-    {id:'B1',seats:7},{id:'B2',seats:8},{id:'B3',seats:8},{id:'B4',seats:7},{id:'B5',seats:7}
+    {id:'B1',seats:8},
+    {id:'B2',seats:8},
+    {id:'B3',seats:8},
+    {id:'B4',seats:8},
+    {id:'B5',seats:8},
   ]},
 ];
 
@@ -752,6 +741,7 @@ function renderPanel(f=''){
 function updateStats(){
   const a=getAssigned().length;
   const chk=Object.values(checkMap).filter(v=>v===true).length;
+  document.getElementById('st-total').textContent=PEOPLE.length;
   document.getElementById('st-done').textContent=a;
   document.getElementById('st-checked').textContent=chk;
   document.getElementById('st-left').textContent=PEOPLE.length-a;
@@ -810,7 +800,7 @@ function renderMap(f=''){
 }
 
 function renderPrint(){
-  let h=`<div style="text-align:center;margin-bottom:.9rem;font-size:.82rem;color:var(--gray2)">2025 사람과디지털포럼 VIP 자리배치 · ${new Date().toLocaleString('ko-KR')}</div>`;
+  let h=`<div style="text-align:center;margin-bottom:.9rem;font-size:.82rem;color:var(--gray2)">2026 사람과디지털포럼 VIP 자리배치 · ${new Date().toLocaleString('ko-KR')}</div>`;
   ZONES.forEach(z=>{
     h+=`<div class="print-section"><div class="print-section-title">${z.label}</div>`;
     z.rows.forEach(r=>{
