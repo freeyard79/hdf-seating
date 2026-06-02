@@ -649,6 +649,13 @@ function getUnassigned(f=''){
   const a=new Set(getAssigned());
   return PEOPLE.filter(p=>!a.has(p.id)&&(!f||p.name.includes(f)));
 }
+function seatBadge(p){
+  let badge = '';
+  if(p.type==='speaker')    badge = '<span style="display:inline-block;background:rgba(244,114,182,.22);color:#f472b6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">연사</span>';
+  else if(p.type==='vvip')  badge = '<span style="display:inline-block;background:rgba(255,107,107,.28);color:#ff6b6b;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">VVIP</span>';
+  else if(p.type==='unassigned') badge = '<span style="display:inline-block;background:rgba(173,181,198,.22);color:#adb5c6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">미배정</span>';
+  return '<span class="seat-nm">' + badge + p.name + '</span><span class="seat-og">' + p.org + '</span>';
+}
 function getSeatOf(pid){return Object.keys(seatMap).find(k=>seatMap[k]===pid)}
 function typeClass(t){
   if(t==='vvip')       return 't-vvip';
@@ -707,6 +714,9 @@ function mergeAll(data){
   }
   memoMap=(data.memo&&typeof data.memo==='object')?data.memo:{};
 }
+
+/* 내가 직접 쓴 변경사항이 SSE로 되돌아올 때 무시하기 위한 플래그 */
+let _ignoreRemote = false;
 
 /* SSE 이벤트를 경로별로 처리 — 변경된 부분만 업데이트 */
 function applyRemote(path, data){
@@ -776,9 +786,6 @@ function applyRemote(path, data){
   fbGet().then(d=>{ if(d){ mergeAll(d); saveLocal(); render(); } });
 }
 
-/* 내가 직접 쓴 변경사항이 SSE로 되돌아올 때 무시하기 위한 플래그 */
-let _ignoreRemote = false;
-
 async function pushSeat(key, pid){
   seatMap[key]=pid||null; saveLocal();
   _ignoreRemote = true;
@@ -845,7 +852,7 @@ function renderChart(){
           <span class="seat-key">${k}</span>
           ${pid&&checkMap[pid]?`<span class="seat-check-icon"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></span>`:''}
           ${pid&&memoMap[pid]?`<span class="seat-memo-dot"></span>`:''}
-          ${p?`<span class="seat-nm">${p.type==='speaker'?'<span style="display:inline-block;background:rgba(244,114,182,.22);color:#f472b6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">연사</span>':p.type==='vvip'?'<span style="display:inline-block;background:rgba(255,107,107,.28);color:#ff6b6b;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">VVIP</span>':p.type==='unassigned'?'<span style="display:inline-block;background:rgba(173,181,198,.22);color:#adb5c6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">미배정</span>':\'\'}${p.name}</span><span class="seat-og">${p.org}</span>`:''}
+          ${p?seatBadge(p):''}
         </div>`;
       }
       h+=`</div>`;
