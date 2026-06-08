@@ -707,14 +707,17 @@ function updateStats(){
 function mobSearch(q){
   var el=document.getElementById('mob-results');
   if(!q){el.innerHTML='<div class="mob-empty"><span class="mob-empty-icon">&#128269;</span>이름을 입력하면 자리를 바로 확인합니다</div>';return;}
-  var results=PEOPLE.filter(function(p){return p.name.includes(q)||p.org.includes(q);});
+  /* 이름만 매칭 (소속 제외) */
+  var results=PEOPLE.filter(function(p){return p.name.includes(q);});
   if(!results.length){el.innerHTML='<div class="mob-empty"><span class="mob-empty-icon">&#128533;</span>검색 결과가 없습니다</div>';return;}
+  /* 좌석 아이콘 SVG */
+  var seatIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22" style="flex-shrink:0"><path d="M4 3h2a1 1 0 0 1 1 1v9h10V4a1 1 0 0 1 1-1h2"/><path d="M4 13v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/><path d="M7 21h10"/><path d="M12 18v3"/></svg>';
   el.innerHTML=results.map(function(p){
     var tc=typeClass(p.type),key=getSeatOf(p.id),isChk=!!checkMap[p.id],memo=memoMap[p.id];
     return '<div class="mob-card '+tc+(isChk?' is-checked':'')+'">'+
            '<div class="mob-person-name">'+roleLabel(p.type)+p.name+(isChk?'<span class="mob-checked-badge">참석확인</span>':'')+'</div>'+
            '<div class="mob-person-org">'+p.org+'</div>'+
-           (key?'<div class="mob-seat-box"><div style="font-size:1.3rem">&#128250;</div><div><div class="mob-seat-key '+tc+'">'+key+'</div><div class="mob-seat-desc">'+getZoneDesc(key)+'</div></div></div>':'<div class="mob-unassigned">자리 미배치 — 스태프에게 문의</div>')+
+           (key?'<div class="mob-seat-box">'+seatIcon+'<div><div class="mob-seat-key '+tc+'">'+key+'</div><div class="mob-seat-desc">'+getZoneDesc(key)+'</div></div></div>':'<div class="mob-unassigned">자리 미배치 — 스태프에게 문의</div>')+
            (memo?'<div class="mob-memo-box">'+memo+'</div>':'')+
            (key?'<button class="mob-check-btn'+(isChk?' checked':'')+'" onclick="mobToggleCheck(\''+p.id+'\',this)">'+(isChk?'참석 확인됨 (탭하면 취소)':'참석 확인하기')+'</button>':'')+
            '</div>';
