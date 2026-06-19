@@ -482,7 +482,10 @@ function parseSheetCSV(csv){
     if(roleType==='unassigned') continue;
     // F열(cols[5]) = 소속 및 직위(국문), 줄바꿈을 공백으로
     var org=(cols[5]||'').replace(/[\u200b\u00a0]/g,'').replace(/\s+/g,' ').trim();
-    people.push({id:'p'+idx, name:name, org:org, type:roleType});
+    // A열(cols[0]) = 구분 (종일/오전/오후)
+    var session=(cols[0]||'').replace(/[\u200b\u00a0\s]/g,'');
+    if(session!=='종일'&&session!=='오전'&&session!=='오후') session='';
+    people.push({id:'p'+idx, name:name, org:org, type:roleType, session:session});
     idx++;
   }
   return people;
@@ -491,71 +494,71 @@ function parseSheetCSV(csv){
 // 시트 원본 폴백 데이터 (2026_speakers&VIP 탭 직접 반영, 62명)
 var PEOPLE_FALLBACK = [
   /* Organizer 5명 */
-  {id:'p1',  name:'박찬수',           org:'한겨레신문사 대표',                                    type:'org'},
-  {id:'p2',  name:'조현경',           org:'한겨레경제사회연구원 원장',                              type:'org'},
-  {id:'p3',  name:'황준범',           org:'한겨레 뉴스룸 국장',                                   type:'org'},
-  {id:'p4',  name:'유상진',           org:'한겨레신문사 상무',                                    type:'org'},
-  {id:'p5',  name:'오원식',           org:'한겨레신문사 광고국장',                                 type:'org'},
+  {id:'p1',  name:'박찬수',           org:'한겨레신문사 대표',                                    type:'org',     session:'종일'},
+  {id:'p2',  name:'조현경',           org:'한겨레경제사회연구원 원장',                              type:'org',     session:'종일'},
+  {id:'p3',  name:'황준범',           org:'한겨레 뉴스룸 국장',                                   type:'org',     session:'오전'},
+  {id:'p4',  name:'유상진',           org:'한겨레신문사 상무',                                    type:'org',     session:'오전'},
+  {id:'p5',  name:'오원식',           org:'한겨레신문사 광고국장',                                 type:'org',     session:'오전'},
   /* VVIP 3명 */
-  {id:'p6',  name:'김지형',           org:'경제사회노동위원회 위원장',                              type:'vvip'},
-  {id:'p7',  name:'정근식',           org:'서울시교육감',                                        type:'vvip'},
-  {id:'p8',  name:'장여경',           org:'정보인권연구소 상임이사',                               type:'vvip'},
+  {id:'p6',  name:'김지형',           org:'경제사회노동위원회 위원장',                              type:'vvip',    session:'오전'},
+  {id:'p7',  name:'정근식',           org:'서울시교육감',                                        type:'vvip',    session:'오전'},
+  {id:'p8',  name:'장여경',           org:'정보인권연구소 상임이사',                               type:'vvip',    session:'오전'},
   /* Speaker 15명 */
-  {id:'p9',  name:'칼 베네딕트 프레이', org:'영국 옥스퍼드대 교수',                                type:'speaker'},
-  {id:'p10', name:'세라 오코너',       org:'파이낸셜타임스 부편집인',                               type:'speaker'},
-  {id:'p11', name:'이상헌',           org:'국제노동기구(ILO) 수석 이코노미스트',                    type:'speaker'},
-  {id:'p12', name:'장지연',           org:'한국노동연구원 선임연구위원',                            type:'speaker'},
-  {id:'p13', name:'박영선',           org:'전략경제자문단 위원장',                                 type:'speaker'},
-  {id:'p14', name:'음성원',           org:'오픈AI코리아 커뮤니케이션 총괄',                         type:'speaker'},
-  {id:'p15', name:'홍성준',           org:'뱅크샐러드 디자인 총괄 이사',                           type:'speaker'},
-  {id:'p16', name:'이덕만',           org:'포스코홀딩스 AI로봇융합연구소 지능화연구센터 센터장',       type:'speaker'},
-  {id:'p17', name:'유재연',           org:'국가AI전략위 사회분과장',                               type:'speaker'},
-  {id:'p18', name:'김희삼',           org:'광주과학기술원(GIST) 교수',                            type:'speaker'},
-  {id:'p19', name:'구본권',           org:'디지털 인문학자',                                      type:'speaker'},
-  {id:'p20', name:'박숙자',           org:'서강대 전인교육원 교수',                                type:'speaker'},
-  {id:'p21', name:'이범',             org:'교육평론가',                                          type:'speaker'},
-  {id:'p22', name:'이수정',           org:'성신여고 영어과 교사',                                  type:'speaker'},
-  {id:'p23', name:'박영민',           org:'카이스트 부설 한국과학영재학교 전임교원',                  type:'speaker'},
+  {id:'p9',  name:'칼 베네딕트 프레이', org:'영국 옥스퍼드대 교수',                                type:'speaker', session:'종일'},
+  {id:'p10', name:'세라 오코너',       org:'파이낸셜타임스 부편집인',                               type:'speaker', session:'종일'},
+  {id:'p11', name:'이상헌',           org:'국제노동기구(ILO) 수석 이코노미스트',                    type:'speaker', session:'종일'},
+  {id:'p12', name:'장지연',           org:'한국노동연구원 선임연구위원',                            type:'speaker', session:'오전'},
+  {id:'p13', name:'박영선',           org:'전략경제자문단 위원장',                                 type:'speaker', session:'오전'},
+  {id:'p14', name:'음성원',           org:'오픈AI코리아 커뮤니케이션 총괄',                         type:'speaker', session:'오전'},
+  {id:'p15', name:'홍성준',           org:'뱅크샐러드 디자인 총괄 이사',                           type:'speaker', session:'오전'},
+  {id:'p16', name:'이덕만',           org:'포스코홀딩스 AI로봇융합연구소 지능화연구센터 센터장',       type:'speaker', session:'오전'},
+  {id:'p17', name:'유재연',           org:'국가AI전략위 사회분과장',                               type:'speaker', session:'오전'},
+  {id:'p18', name:'김희삼',           org:'광주과학기술원(GIST) 교수',                            type:'speaker', session:'오후'},
+  {id:'p19', name:'구본권',           org:'디지털 인문학자',                                      type:'speaker', session:'종일'},
+  {id:'p20', name:'박숙자',           org:'서강대 전인교육원 교수',                                type:'speaker', session:'오후'},
+  {id:'p21', name:'이범',             org:'교육평론가',                                          type:'speaker', session:'오후'},
+  {id:'p22', name:'이수정',           org:'성신여고 영어과 교사',                                  type:'speaker', session:'오후'},
+  {id:'p23', name:'박영민',           org:'카이스트 부설 한국과학영재학교 전임교원',                  type:'speaker', session:'종일'},
   /* VIP 39명 */
-  {id:'p24', name:'오연호',           org:'오마이뉴스 대표',                                      type:'vip'},
-  {id:'p25', name:'이창곤',           org:'우분투재단 이사장',                                    type:'vip'},
-  {id:'p26', name:'서복경',           org:'더가능연구소 대표',                                    type:'vip'},
-  {id:'p27', name:'제정임',           org:'세명대 저널리즘스쿨 대학원 교수',                        type:'vip'},
-  {id:'p28', name:'홍일표',           org:'국회입법조사처 사회문화조사실장',                         type:'vip'},
-  {id:'p29', name:'허재형',           org:'루트임팩트 이사장',                                    type:'vip'},
-  {id:'p30', name:'김소연',           org:'뉴닉 대표',                                           type:'vip'},
-  {id:'p31', name:'이혜경',           org:'연세대 명예교수',                                      type:'vip'},
-  {id:'p32', name:'윤홍식',           org:'인하대 사회복지학과 교수',                              type:'vip'},
-  {id:'p33', name:'김태동',           org:'성균관대 명예교수',                                    type:'vip'},
-  {id:'p34', name:'권오현',           org:'사회적협동조합 빠띠 이사장',                             type:'vip'},
-  {id:'p35', name:'이원태',           org:'국민대 특임교수',                                      type:'vip'},
-  {id:'p36', name:'정영애',           org:'사의재 이사/전 여성가족부 장관',                         type:'vip'},
-  {id:'p37', name:'김진아',           org:'아름다운재단 사무총장',                                 type:'vip'},
-  {id:'p38', name:'김수영',           org:'서울대 사회복지학과 교수',                              type:'vip'},
-  {id:'p39', name:'정상훈',           org:'규제합리화위원회 위원/유디임팩트 고문',                   type:'vip'},
-  {id:'p40', name:'김수동',           org:'사회투자지원재단 이사',                                 type:'vip'},
-  {id:'p41', name:'김종훈',           org:'한국사회가치연대기금 전문위원',                          type:'vip'},
-  {id:'p42', name:'천현득',           org:'서울대 과학학과 교수',                                  type:'vip'},
-  {id:'p43', name:'오귀복',           org:'주식회사 자연드림 대표',                                type:'vip'},
-  {id:'p44', name:'이영희',           org:'라이프케어이종연합회',                                  type:'vip'},
-  {id:'p45', name:'권오창',           org:'민족화합연합회 공동의장',                               type:'vip'},
-  {id:'p46', name:'김승남',           org:'조은시스템 명예회장',                                  type:'vip'},
-  {id:'p47', name:'이상훈',           org:'한국방송통신전파진흥원 원장',                            type:'vip'},
-  {id:'p48', name:'김세형',           org:'매일경제신문사 논설고문',                               type:'vip'},
-  {id:'p49', name:'최정식',           org:'UNI 한국협의회 사무총장',                              type:'vip'},
-  {id:'p50', name:'김종진',           org:'일하는시민연구소 소장',                                 type:'vip'},
-  {id:'p51', name:'신영전',           org:'한양대 의대 교수',                                     type:'vip'},
-  {id:'p52', name:'김창환',           org:'노사발전재단 노사상생본부장',                            type:'vip'},
-  {id:'p53', name:'이병훈',           org:'한국산업인력공단 이사장',                               type:'vip'},
-  {id:'p54', name:'채백련',           org:'주식회사 원백 공동대표',                                type:'vip'},
-  {id:'p55', name:'황용석',           org:'건국대학교 교수',                                      type:'vip'},
-  {id:'p56', name:'윤경효',           org:'한국지속가능발전센터 이사',                              type:'vip'},
-  {id:'p57', name:'이은경',           org:'UNGC 실장',                                          type:'vip'},
-  {id:'p58', name:'김태영',           org:'광주과학기술원 기획처장',                               type:'vip'},
-  {id:'p59', name:'이정연',           org:'에쓰-오일 책임',                                       type:'vip'},
-  {id:'p60', name:'김영식',           org:'전국 사회연대경제 지방정부협의회 사무국장',               type:'vip'},
-  {id:'p61', name:'홍경선',           org:'삼성전자 부사장',                                      type:'vip'},
-  {id:'p62', name:'이승관',           org:'삼성SDI 상무',                                        type:'vip'}
+  {id:'p24', name:'오연호',           org:'오마이뉴스 대표',                                      type:'vip',     session:'종일'},
+  {id:'p25', name:'이창곤',           org:'우분투재단 이사장',                                    type:'vip',     session:'종일'},
+  {id:'p26', name:'서복경',           org:'더가능연구소 대표',                                    type:'vip',     session:'종일'},
+  {id:'p27', name:'제정임',           org:'세명대 저널리즘스쿨 대학원 교수',                        type:'vip',     session:'종일'},
+  {id:'p28', name:'홍일표',           org:'국회입법조사처 사회문화조사실장',                         type:'vip',     session:'종일'},
+  {id:'p29', name:'허재형',           org:'루트임팩트 이사장',                                    type:'vip',     session:'종일'},
+  {id:'p30', name:'김소연',           org:'뉴닉 대표',                                           type:'vip',     session:'오전'},
+  {id:'p31', name:'이혜경',           org:'연세대 명예교수',                                      type:'vip',     session:'오전'},
+  {id:'p32', name:'윤홍식',           org:'인하대 사회복지학과 교수',                              type:'vip',     session:'종일'},
+  {id:'p33', name:'김태동',           org:'성균관대 명예교수',                                    type:'vip',     session:'종일'},
+  {id:'p34', name:'권오현',           org:'사회적협동조합 빠띠 이사장',                             type:'vip',     session:'종일'},
+  {id:'p35', name:'이원태',           org:'국민대 특임교수',                                      type:'vip',     session:'오전'},
+  {id:'p36', name:'정영애',           org:'사의재 이사/전 여성가족부 장관',                         type:'vip',     session:'종일'},
+  {id:'p37', name:'김진아',           org:'아름다운재단 사무총장',                                 type:'vip',     session:'종일'},
+  {id:'p38', name:'김수영',           org:'서울대 사회복지학과 교수',                              type:'vip',     session:'종일'},
+  {id:'p39', name:'정상훈',           org:'규제합리화위원회 위원/유디임팩트 고문',                   type:'vip',     session:'종일'},
+  {id:'p40', name:'김수동',           org:'사회투자지원재단 이사',                                 type:'vip',     session:'종일'},
+  {id:'p41', name:'김종훈',           org:'한국사회가치연대기금 전문위원',                          type:'vip',     session:'종일'},
+  {id:'p42', name:'천현득',           org:'서울대 과학학과 교수',                                  type:'vip',     session:'종일'},
+  {id:'p43', name:'오귀복',           org:'주식회사 자연드림 대표',                                type:'vip',     session:'종일'},
+  {id:'p44', name:'이영희',           org:'라이프케어이종연합회',                                  type:'vip',     session:'종일'},
+  {id:'p45', name:'권오창',           org:'민족화합연합회 공동의장',                               type:'vip',     session:'종일'},
+  {id:'p46', name:'김승남',           org:'조은시스템 명예회장',                                  type:'vip',     session:'종일'},
+  {id:'p47', name:'이상훈',           org:'한국방송통신전파진흥원 원장',                            type:'vip',     session:'종일'},
+  {id:'p48', name:'김세형',           org:'매일경제신문사 논설고문',                               type:'vip',     session:'종일'},
+  {id:'p49', name:'최정식',           org:'UNI 한국협의회 사무총장',                              type:'vip',     session:'종일'},
+  {id:'p50', name:'김종진',           org:'일하는시민연구소 소장',                                 type:'vip',     session:'종일'},
+  {id:'p51', name:'신영전',           org:'한양대 의대 교수',                                     type:'vip',     session:'종일'},
+  {id:'p52', name:'김창환',           org:'노사발전재단 노사상생본부장',                            type:'vip',     session:'종일'},
+  {id:'p53', name:'이병훈',           org:'한국산업인력공단 이사장',                               type:'vip',     session:'종일'},
+  {id:'p54', name:'채백련',           org:'주식회사 원백 공동대표',                                type:'vip',     session:'오전'},
+  {id:'p55', name:'황용석',           org:'건국대학교 교수',                                      type:'vip',     session:'오전'},
+  {id:'p56', name:'윤경효',           org:'한국지속가능발전센터 이사',                              type:'vip',     session:'종일'},
+  {id:'p57', name:'이은경',           org:'UNGC 실장',                                          type:'vip',     session:'종일'},
+  {id:'p58', name:'김태영',           org:'광주과학기술원 기획처장',                               type:'vip',     session:'오후'},
+  {id:'p59', name:'이정연',           org:'에쓰-오일 책임',                                       type:'vip',     session:'오전'},
+  {id:'p60', name:'김영식',           org:'전국 사회연대경제 지방정부협의회 사무국장',               type:'vip',     session:'오전'},
+  {id:'p61', name:'홍경선',           org:'삼성전자 부사장',                                      type:'vip',     session:'오전'},
+  {id:'p62', name:'이승관',           org:'삼성SDI 상무',                                        type:'vip',     session:'오전'}
 ];
 
 var ZONES = [
@@ -614,11 +617,19 @@ function getZoneDesc(key){
   return (row.startsWith('A')?'A구역(앞)':'B구역(뒤)')+' '+parseInt(row.slice(1))+'행 '+parseInt(key.split('-')[1])+'번';
 }
 function seatBadge(p){
-  var badge='';
-  if(p.type==='speaker')    badge='<span style="display:inline-block;background:rgba(244,114,182,.22);color:#f472b6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">연사</span>';
-  else if(p.type==='vvip')  badge='<span style="display:inline-block;background:rgba(255,107,107,.28);color:#ff6b6b;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">VVIP</span>';
-  else if(p.type==='unassigned') badge='<span style="display:inline-block;background:rgba(173,181,198,.22);color:#adb5c6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">미배정</span>';
-  return '<span class="seat-nm">'+badge+p.name+'</span><span class="seat-og">'+p.org+'</span>';
+  var roleBadge='';
+  var t=p.type||'';
+  if(t==='speaker')    roleBadge='<span style="display:inline-block;background:rgba(244,114,182,.25);color:#f472b6;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">연사</span>';
+  else if(t==='vvip')  roleBadge='<span style="display:inline-block;background:rgba(255,107,107,.3);color:#ff6b6b;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">VVIP</span>';
+  else if(t==='vip')   roleBadge='<span style="display:inline-block;background:rgba(99,102,241,.25);color:#818cf8;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">VIP</span>';
+  else if(t==='org')   roleBadge='<span style="display:inline-block;background:rgba(45,212,191,.22);color:#2dd4bf;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">주최</span>';
+  else if(t==='unassigned') roleBadge='<span style="display:inline-block;background:rgba(173,181,198,.22);color:#adb5c6;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">미배정</span>';
+  var sessBadge='';
+  var s=p.session||'';
+  if(s==='오전')       sessBadge='<span style="display:inline-block;background:rgba(59,130,246,.22);color:#60a5fa;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">오전</span>';
+  else if(s==='오후')  sessBadge='<span style="display:inline-block;background:rgba(251,191,36,.22);color:#fbbf24;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">오후</span>';
+  else if(s==='종일')  sessBadge='<span style="display:inline-block;background:rgba(52,211,153,.18);color:#34d399;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">종일</span>';
+  return '<span class="seat-nm">'+roleBadge+sessBadge+p.name+'</span><span class="seat-og">'+p.org+'</span>';
 }
 
 // 로컬스토리지
