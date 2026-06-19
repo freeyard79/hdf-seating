@@ -355,8 +355,21 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
   </div>
   <div class="desk-actions">
     <button class="btn-act" onclick="doExport()">현황복사</button>
+    <button class="btn-act" onclick="doSaveSnap()">💾 저장</button>
+    <button class="btn-act" onclick="openSnapModal()">↩ 복원</button>
     <button class="btn-act" onclick="switchTab('print')">인쇄/QR</button>
     <button class="btn-act danger" onclick="doReset()">초기화</button>
+  </div>
+</div>
+
+<div id="snap-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(10,14,26,.88);align-items:center;justify-content:center;padding:1.5rem">
+  <div style="background:var(--navy2);border:1px solid var(--border2);border-radius:14px;padding:1.3rem;max-width:360px;width:100%">
+    <h3 style="font-size:.93rem;font-weight:600;margin-bottom:.3rem">배치 복원</h3>
+    <p style="font-size:.72rem;color:var(--gray2);margin-bottom:.85rem">저장된 시점으로 되돌립니다. 현재 배치는 사라집니다.</p>
+    <div id="snap-list" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;margin-bottom:.85rem"></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeSnapModal()" style="flex:1;padding:.5rem;border-radius:8px;border:1px solid var(--border2);font-size:.8rem;cursor:pointer;background:var(--navy3);color:var(--cream2);font-weight:500">닫기</button>
+    </div>
   </div>
 </div>
 
@@ -458,16 +471,14 @@ function parseSheetCSV(csv){
   var people=[],idx=1;
   for(var r=1;r<rows.length;r++){
     var cols=rows[r];
-    // A열=구분(session), B열=역할, C열=성명, D열=배치번호, E열=성명영문, F열=소속국문, G열=소속영문, H열=비고
-    // C열(이름) 정리 - 제로폭공백 등 특수문자 제거
-    var name=(cols[2]||'').replace(/[\u200b\u00a0\u200c\u200d\ufeff]/g,'').trim();
+    // B열(이름) 정리 - 제로폭공백 등 특수문자 제거
+    var name=(cols[1]||'').replace(/[\u200b\u00a0\u200c\u200d\ufeff]/g,'').trim();
     // 이름이 없으면 무조건 스킵
     if(!name) continue;
-    var session=(cols[0]||'').trim();
-    var role=(cols[1]||'').trim();
-    // F열(소속 국문) 사용, 줄바꿈을 공백으로
-    var org=(cols[5]||'').replace(/[\u200b\u00a0]/g,'').replace(/\s+/g,' ').trim();
-    people.push({id:'p'+idx, name:name, org:org, type:parseRole(role), session:session});
+    var role=cols[0]||'';
+    // E열(소속 국문) 사용, 줄바꿈을 공백으로
+    var org=(cols[4]||'').replace(/[\u200b\u00a0]/g,'').replace(/\s+/g,' ').trim();
+    people.push({id:'p'+idx, name:name, org:org, type:parseRole(role)});
     idx++;
   }
   return people;
@@ -476,67 +487,55 @@ function parseSheetCSV(csv){
 // 시트 원본 폴백 데이터 (직접 읽은 결과)
 var PEOPLE_FALLBACK = [
   /* Organizer 5명 */
-  {id:'p1',  name:'박찬수',           org:'한겨레신문사 대표',                              type:'org',     session:''},
-  {id:'p2',  name:'조현경',           org:'한겨레경제사회연구원 원장',                        type:'org',     session:''},
-  {id:'p3',  name:'황준범',           org:'한겨레 뉴스룸 국장',                             type:'org',     session:''},
-  {id:'p4',  name:'유상진',           org:'한겨레신문사 상무',                              type:'org',     session:''},
-  {id:'p5',  name:'오원식',           org:'한겨레신문사 광고국장',                           type:'org',     session:''},
-  /* VVIP 4명 */
-  {id:'p6',  name:'김지형',           org:'경제사회노동위원회 위원장',                        type:'vvip',    session:''},
-  {id:'p7',  name:'정근식',           org:'서울시교육감',                                   type:'vvip',    session:''},
-  {id:'p8',  name:'장여경',           org:'정보인권연구소 상임이사',                          type:'vvip',    session:''},
+  {id:'p1',  name:'박찬수',           org:'한겨레신문사 대표',                              type:'org'},
+  {id:'p2',  name:'조현경',           org:'한겨레경제사회연구원 원장',                        type:'org'},
+  {id:'p3',  name:'황준범',           org:'한겨레 뉴스룸 국장',                             type:'org'},
+  {id:'p4',  name:'유상진',           org:'한겨레신문사 상무',                              type:'org'},
+  {id:'p5',  name:'오원식',           org:'한겨레신문사 광고국장',                           type:'org'},
+  /* VVIP 2명 */
+  {id:'p6',  name:'남윤인순',          org:'국회부의장',                                    type:'vvip'},
+  {id:'p7',  name:'김지형',           org:'경제사회노동위원회 위원장',                        type:'vvip'},
   /* Speaker 15명 */
-  {id:'p9',  name:'칼 베네딕트 프레이', org:'영국 옥스퍼드대 교수',                           type:'speaker', session:''},
-  {id:'p10', name:'세라 오코너',       org:'파이낸셜타임스 부편집인',                         type:'speaker', session:''},
-  {id:'p11', name:'이상헌',           org:'국제노동기구(ILO) 수석 이코노미스트',              type:'speaker', session:''},
-  {id:'p12', name:'장지연',           org:'한국노동연구원 선임연구위원',                      type:'speaker', session:''},
-  {id:'p13', name:'박영선',           org:'전략경제자문단 위원장',                           type:'speaker', session:''},
-  {id:'p14', name:'음성원',           org:'오픈AI코리아 커뮤니케이션 총괄',                   type:'speaker', session:''},
-  {id:'p15', name:'홍성준',           org:'뱅크샐러드 디자인 총괄 이사',                     type:'speaker', session:''},
-  {id:'p16', name:'이덕만',           org:'포스코홀딩스 AI로봇융합연구소 지능화연구센터 센터장', type:'speaker', session:''},
-  {id:'p17', name:'유재연',           org:'국가AI전략위 사회분과장',                         type:'speaker', session:''},
-  {id:'p18', name:'김희삼',           org:'광주과학기술원(GIST) 교수',                      type:'speaker', session:''},
-  {id:'p19', name:'구본권',           org:'디지털 인문학자',                                type:'speaker', session:''},
-  {id:'p20', name:'박숙자',           org:'서강대 전인교육원 교수',                          type:'speaker', session:''},
-  {id:'p21', name:'이범',             org:'교육평론가',                                    type:'speaker', session:''},
-  {id:'p22', name:'이수정',           org:'성신여고 영어과 교사',                            type:'speaker', session:''},
-  {id:'p23', name:'박영민',           org:'카이스트 부설 한국과학영재학교 전임교원',            type:'speaker', session:''},
+  {id:'p8',  name:'칼 베네딕트 프레이', org:'영국 옥스퍼드대 교수',                           type:'speaker'},
+  {id:'p9',  name:'세라 오코너',       org:'파이낸셜타임스 부편집인',                         type:'speaker'},
+  {id:'p10', name:'이상헌',           org:'국제노동기구(ILO) 수석 이코노미스트',              type:'speaker'},
+  {id:'p11', name:'장지연',           org:'한국노동연구원 선임연구위원',                      type:'speaker'},
+  {id:'p12', name:'박영선',           org:'전략경제자문단 위원장',                           type:'speaker'},
+  {id:'p13', name:'음성원',           org:'오픈AI코리아 커뮤니케이션 총괄',                   type:'speaker'},
+  {id:'p14', name:'홍성준',           org:'뱅크샐러드 디자인 총괄 이사',                     type:'speaker'},
+  {id:'p15', name:'이덕만',           org:'포스코홀딩스 AI로봇융합연구소 지능화연구센터 센터장', type:'speaker'},
+  {id:'p16', name:'유재연',           org:'국가AI전략위 사회분과장',                         type:'speaker'},
+  {id:'p17', name:'김희삼',           org:'광주과학기술원(GIST) 교수',                      type:'speaker'},
+  {id:'p18', name:'구본권',           org:'디지털 인문학자',                                type:'speaker'},
+  {id:'p19', name:'박숙자',           org:'서강대 전인교육원 교수',                          type:'speaker'},
+  {id:'p20', name:'이범',             org:'교육평론가',                                    type:'speaker'},
+  {id:'p21', name:'이수정',           org:'성신여고 영어과 교사',                            type:'speaker'},
+  {id:'p22', name:'박영민',           org:'카이스트 부설 한국과학영재학교 전임교원',            type:'speaker'},
   /* VIP 24명 */
-  {id:'p24', name:'오연호',           org:'오마이뉴스 대표',                                type:'vip',     session:''},
-  {id:'p25', name:'이창곤',           org:'우분투재단 이사장',                              type:'vip',     session:''},
-  {id:'p26', name:'이한기',           org:'오마이뉴스 편집국장',                             type:'vip',     session:''},
-  {id:'p27', name:'서복경',           org:'더가능연구소 대표',                              type:'vip',     session:''},
-  {id:'p28', name:'제정임',           org:'세명대 저널리즘스쿨 대학원 교수',                  type:'vip',     session:''},
-  {id:'p29', name:'홍일표',           org:'국회입법조사처 사회문화조사실장',                   type:'vip',     session:''},
-  {id:'p30', name:'허재형',           org:'루트임팩트 이사장',                              type:'vip',     session:''},
-  {id:'p31', name:'김소연',           org:'뉴닉 대표',                                     type:'vip',     session:''},
-  {id:'p32', name:'이혜경',           org:'연세대 명예교수',                                type:'vip',     session:''},
-  {id:'p33', name:'윤홍식',           org:'인하대 사회복지학과 교수',                        type:'vip',     session:''},
-  {id:'p34', name:'김태동',           org:'성균관대 명예교수',                              type:'vip',     session:''},
-  {id:'p35', name:'권오현',           org:'사회적협동조합 빠띠 이사장',                       type:'vip',     session:''},
-  {id:'p36', name:'이원태',           org:'국민대 특임교수',                                type:'vip',     session:''},
-  {id:'p37', name:'정영애',           org:'사의재 이사/전 여성가족부 장관',                   type:'vip',     session:''},
-  {id:'p38', name:'김진아',           org:'아름다운재단 사무총장',                           type:'vip',     session:''},
-  {id:'p39', name:'김수영',           org:'서울대 사회복지학과 교수',                        type:'vip',     session:''},
-  {id:'p40', name:'정진영',           org:'임팩트확산네트워크 이사장',                        type:'vip',     session:''},
-  {id:'p41', name:'정상훈',           org:'규제합리화위원회 위원/유디임팩트 고문',              type:'vip',     session:''},
-  {id:'p42', name:'김수동',           org:'사회투자지원재단 이사',                           type:'vip',     session:''},
-  {id:'p43', name:'김종훈',           org:'한국사회가치연대기금 전문위원',                     type:'vip',     session:''},
-  {id:'p44', name:'천현득',           org:'서울대 과학학과 교수',                            type:'vip',     session:''},
-  {id:'p45', name:'오귀복',           org:'주식회사 자연드림 대표',                          type:'vip',     session:''},
-  {id:'p46', name:'이영희',           org:'라이프케어이종연합회',                             type:'vip',     session:''},
-  {id:'p47', name:'권오창',           org:'민족화합연합회 공동의장',                          type:'vip',     session:''},
-  {id:'p48', name:'김승남',           org:'조은시스템 명예회장',                             type:'vip',     session:''},
-  {id:'p49', name:'이상훈',           org:'한국방송통신전파진흥원 원장',                      type:'vip',     session:''},
-  {id:'p50', name:'김세형',           org:'매일경제신문사 논설고문',                          type:'vip',     session:''},
-  {id:'p51', name:'최정식',           org:'UNI 한국협의회 사무총장',                         type:'vip',     session:''},
-  {id:'p52', name:'김종진',           org:'일하는시민연구소 소장',                           type:'vip',     session:''},
-  {id:'p53', name:'신영전',           org:'한양대 의대 교수',                               type:'vip',     session:''},
-  {id:'p54', name:'김창환',           org:'노사발전재단 노사상생본부장',                      type:'vip',     session:''},
-  {id:'p55', name:'이병훈',           org:'한국산업인력공단 이사장',                          type:'vip',     session:''},
-  {id:'p56', name:'채백련',           org:'주식회사 원백 공동대표',                          type:'vip',     session:''},
-  {id:'p57', name:'황용석',           org:'건국대 교수',                                   type:'vip',     session:''},
-  {id:'p58', name:'윤경효',           org:'한국지속가능발전센터 이사',                        type:'vip',     session:''}
+  {id:'p23', name:'오연호',           org:'오마이뉴스 대표',                                type:'vip'},
+  {id:'p24', name:'이창곤',           org:'우분투재단 이사장',                              type:'vip'},
+  {id:'p25', name:'이한기',           org:'오마이뉴스 편집국장',                             type:'vip'},
+  {id:'p26', name:'서복경',           org:'더가능연구소 대표',                              type:'vip'},
+  {id:'p27', name:'제정임',           org:'세명대 저널리즘스쿨 대학원 교수',                  type:'vip'},
+  {id:'p28', name:'홍일표',           org:'국회입법조사처 사회문화조사실장',                   type:'vip'},
+  {id:'p29', name:'허재형',           org:'루트임팩트 이사장',                              type:'vip'},
+  {id:'p30', name:'김소연',           org:'뉴닉 대표',                                     type:'vip'},
+  {id:'p31', name:'이혜경',           org:'연세대 명예교수',                                type:'vip'},
+  {id:'p32', name:'윤홍식',           org:'인하대 사회복지학과 교수',                        type:'vip'},
+  {id:'p33', name:'김태동',           org:'성균관대 명예교수',                              type:'vip'},
+  {id:'p34', name:'권오현',           org:'사회적협동조합 빠띠 이사장',                       type:'vip'},
+  {id:'p35', name:'이원태',           org:'국민대 특임교수',                                type:'vip'},
+  {id:'p36', name:'정영애',           org:'사의재 이사/전 여성가족부 장관',                   type:'vip'},
+  {id:'p37', name:'김진아',           org:'아름다운재단 사무총장',                           type:'vip'},
+  {id:'p38', name:'김수영',           org:'서울대 사회복지학과 교수',                        type:'vip'},
+  {id:'p39', name:'정진영',           org:'임팩트확산네트워크 이사장',                        type:'vip'},
+  {id:'p40', name:'정상훈',           org:'규제합리화위원회 위원/유디임팩트 고문',              type:'vip'},
+  {id:'p41', name:'김수동',           org:'사회투자지원재단 이사',                           type:'vip'},
+  {id:'p42', name:'김종훈',           org:'한국사회가치연대기금 전문위원',                     type:'vip'},
+  {id:'p43', name:'천현득',           org:'서울대 과학학과 교수',                            type:'vip'},
+  {id:'p44', name:'오귀복',           org:'주식회사 자연드림 대표',                          type:'vip'},
+  {id:'p45', name:'이영희',           org:'라이프케어이종연합회',                             type:'vip'},
+  {id:'p46', name:'이상윤',           org:'성공회대학교 교수',                              type:'vip'}
 ];
 
 var ZONES = [
@@ -590,30 +589,16 @@ function roleLabel(t){
   if(t==='unassigned') return '<span class="role-badge rb-unassigned">미배정</span>';
   return '';
 }
-function sessionLabel(s){
-  if(!s) return '';
-  if(s==='오전') return '<span class="role-badge" style="background:rgba(96,165,250,.25);color:#60a5fa;">오전</span>';
-  if(s==='오후') return '<span class="role-badge" style="background:rgba(251,191,36,.25);color:#fbbf24;">오후</span>';
-  if(s==='종일') return '<span class="role-badge" style="background:rgba(52,211,153,.25);color:#34d399;">종일</span>';
-  return '<span class="role-badge" style="background:rgba(148,163,184,.2);color:#94a3b8;">'+s+'</span>';
-}
 function getZoneDesc(key){
   var row=key.split('-')[0];
   return (row.startsWith('A')?'A구역(앞)':'B구역(뒤)')+' '+parseInt(row.slice(1))+'행 '+parseInt(key.split('-')[1])+'번';
 }
 function seatBadge(p){
-  var st='display:inline-block;font-size:.5rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.7';
-  var roleBadge='';
-  if(p.type==='speaker')    roleBadge='<span style="'+st+';background:rgba(244,114,182,.22);color:#f472b6">연사</span>';
-  else if(p.type==='vvip')  roleBadge='<span style="'+st+';background:rgba(255,107,107,.28);color:#ff6b6b">VVIP</span>';
-  else if(p.type==='vip')   roleBadge='<span style="'+st+';background:rgba(250,204,21,.2);color:#facc15">VIP</span>';
-  else if(p.type==='org')   roleBadge='<span style="'+st+';background:rgba(52,211,153,.18);color:#34d399">주최</span>';
-  else if(p.type==='unassigned') roleBadge='<span style="'+st+';background:rgba(173,181,198,.22);color:#adb5c6">미배정</span>';
-  var sessBadge='';
-  if(p.session==='오전')    sessBadge='<span style="'+st+';background:rgba(96,165,250,.22);color:#60a5fa">오전</span>';
-  else if(p.session==='오후') sessBadge='<span style="'+st+';background:rgba(251,191,36,.22);color:#fbbf24">오후</span>';
-  else if(p.session==='종일') sessBadge='<span style="'+st+';background:rgba(52,211,153,.22);color:#34d399">종일</span>';
-  return '<span class="seat-nm">'+roleBadge+sessBadge+p.name+'</span><span class="seat-og">'+p.org+'</span>';
+  var badge='';
+  if(p.type==='speaker')    badge='<span style="display:inline-block;background:rgba(244,114,182,.22);color:#f472b6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">연사</span>';
+  else if(p.type==='vvip')  badge='<span style="display:inline-block;background:rgba(255,107,107,.28);color:#ff6b6b;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">VVIP</span>';
+  else if(p.type==='unassigned') badge='<span style="display:inline-block;background:rgba(173,181,198,.22);color:#adb5c6;font-size:.55rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:3px;vertical-align:1px;line-height:1.6">미배정</span>';
+  return '<span class="seat-nm">'+badge+p.name+'</span><span class="seat-og">'+p.org+'</span>';
 }
 
 // 로컬스토리지
@@ -722,7 +707,7 @@ function renderPanel(f){
   if(!people.length){el.innerHTML='<div style="font-size:.72rem;color:var(--gray);padding:8px 4px">'+(f?'검색 결과 없음':'모두 배치 완료')+'</div>';return;}
   el.innerHTML=people.map(function(p){
     return '<div class="pcard '+typeClass(p.type)+'" draggable="true" ondragstart="dragStartPanel(event,\''+p.id+'\')" title="'+p.name+'">'+
-           '<div class="pcard-nm">'+roleLabel(p.type)+p.name+sessionLabel(p.session)+'</div>'+
+           '<div class="pcard-nm">'+roleLabel(p.type)+p.name+'</div>'+
            '<div class="pcard-og">'+p.org+'</div></div>';
   }).join('');
 }
@@ -747,7 +732,7 @@ function mobSearch(q){
   el.innerHTML=results.map(function(p){
     var tc=typeClass(p.type),key=getSeatOf(p.id),isChk=!!checkMap[p.id],memo=memoMap[p.id];
     return '<div class="mob-card '+tc+(isChk?' is-checked':'')+'">'+
-           '<div class="mob-person-name">'+roleLabel(p.type)+p.name+sessionLabel(p.session)+(isChk?'<span class="mob-checked-badge">참석확인</span>':'')+'</div>'+
+           '<div class="mob-person-name">'+roleLabel(p.type)+p.name+(isChk?'<span class="mob-checked-badge">참석확인</span>':'')+'</div>'+
            '<div class="mob-person-org">'+p.org+'</div>'+
            (key?'<div class="mob-seat-box">'+seatIcon+'<div><div class="mob-seat-key '+tc+'">'+key+'</div><div class="mob-seat-desc">'+getZoneDesc(key)+'</div></div></div>':'<div class="mob-unassigned">자리 미배치 — 스태프에게 문의</div>')+
            (memo?'<div class="mob-memo-box">'+memo+'</div>':'')+
@@ -806,7 +791,7 @@ function seatClick(e,k){
   var p=getPerson(pid);
   if(popupKey===k&&document.getElementById('seat-popup').classList.contains('show')){closePopup();return;}
   popupKey=k;
-  document.getElementById('sp-name').innerHTML=roleLabel(p.type)+p.name+sessionLabel(p.session);
+  document.getElementById('sp-name').textContent=p.name;
   document.getElementById('sp-check').textContent=checkMap[pid]?'참석확인 취소':'참석 확인';
   var popup=document.getElementById('seat-popup');
   popup.classList.add('show');
@@ -935,6 +920,84 @@ function closeConfirm(){document.getElementById('confirm-modal').classList.remov
 function showQR(){var url=APP_URL;document.getElementById('qr-url').textContent=url;var c=document.getElementById('qr-canvas');c.innerHTML='';try{new QRCode(c,{text:url,width:196,height:196,colorDark:'#1a2035',colorLight:'#f5f2ec'});}catch(e){}document.getElementById('qr-modal').classList.add('show');}
 function closeQR(){document.getElementById('qr-modal').classList.remove('show');}
 function doExport(){var t='2026 사람과디지털포럼 VIP 자리배치\n'+new Date().toLocaleString('ko-KR')+'\n\n';ZONES.forEach(function(z){t+='['+z.label+']\n';z.rows.forEach(function(r){var s=[];for(var i=1;i<=r.seats;i++){var pid=seatMap[r.id+'-'+i];s.push(pid?getPerson(pid).name:'--');}t+=r.id+': '+s.join(' | ')+'\n';});t+='\n';});t+='[미배치]\n';getUnassigned().forEach(function(p){t+='- '+p.name+'\n';});navigator.clipboard&&navigator.clipboard.writeText(t).then(function(){showToast('클립보드에 복사됐습니다');});}
+
+/* ── 스냅샷 저장/복원 ── */
+var SNAP_KEY = 'hdf2026_snaps';
+var MAX_SNAPS = 5;
+
+function getSnaps(){
+  try{var s=localStorage.getItem(SNAP_KEY);return s?JSON.parse(s):[];}catch(e){return [];}
+}
+function saveSnaps(snaps){
+  try{localStorage.setItem(SNAP_KEY,JSON.stringify(snaps));}catch(e){}
+}
+
+function doSaveSnap(){
+  var snaps=getSnaps();
+  var now=new Date();
+  var label=now.toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})+' '+
+            now.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  var assigned=getAssigned().length;
+  var snap={
+    label:label,
+    assigned:assigned,
+    ts:now.getTime(),
+    seats:JSON.parse(JSON.stringify(seatMap)),
+    check:JSON.parse(JSON.stringify(checkMap)),
+    memo:JSON.parse(JSON.stringify(memoMap))
+  };
+  snaps.unshift(snap);
+  if(snaps.length>MAX_SNAPS) snaps=snaps.slice(0,MAX_SNAPS);
+  saveSnaps(snaps);
+  showToast('저장됐습니다 ('+label+')');
+}
+
+function openSnapModal(){
+  var snaps=getSnaps();
+  var list=document.getElementById('snap-list');
+  if(!snaps.length){
+    list.innerHTML='<div style="font-size:.78rem;color:var(--gray);text-align:center;padding:1rem">저장된 스냅샷이 없습니다<br><span style="font-size:.7rem">하단 💾 저장 버튼으로 현재 배치를 저장하세요</span></div>';
+  } else {
+    list.innerHTML=snaps.map(function(s,i){
+      return '<div style="display:flex;align-items:center;gap:8px;background:var(--navy3);border:1px solid var(--border);border-radius:8px;padding:.55rem .75rem">'+
+        '<div style="flex:1">'+
+          '<div style="font-size:.8rem;font-weight:600;color:var(--cream)">'+s.label+'</div>'+
+          '<div style="font-size:.68rem;color:var(--gray2);margin-top:1px">배치 '+s.assigned+'명</div>'+
+        '</div>'+
+        '<button onclick="doRestoreSnap('+i+')" style="padding:.35rem .75rem;border-radius:7px;border:none;background:var(--violet);color:#fff;font-size:.72rem;font-weight:600;cursor:pointer">복원</button>'+
+        '<button onclick="doDeleteSnap('+i+')" style="padding:.35rem .6rem;border-radius:7px;border:1px solid var(--border2);background:none;color:var(--gray);font-size:.72rem;cursor:pointer">삭제</button>'+
+      '</div>';
+    }).join('');
+  }
+  document.getElementById('snap-modal').style.display='flex';
+}
+
+function closeSnapModal(){
+  document.getElementById('snap-modal').style.display='none';
+}
+
+function doRestoreSnap(i){
+  var snaps=getSnaps();
+  if(!snaps[i]) return;
+  openConfirm('배치 복원','선택한 시점('+snaps[i].label+')으로 되돌립니다. 현재 배치는 사라집니다.',async function(){
+    closeSnapModal();
+    var s=snaps[i];
+    seatMap=JSON.parse(JSON.stringify(s.seats));
+    checkMap=JSON.parse(JSON.stringify(s.check));
+    memoMap=JSON.parse(JSON.stringify(s.memo));
+    await pushAll();
+    render();
+    showToast(s.label+' 배치로 복원됐습니다');
+  });
+}
+
+function doDeleteSnap(i){
+  var snaps=getSnaps();
+  snaps.splice(i,1);
+  saveSnaps(snaps);
+  openSnapModal();
+  showToast('삭제됐습니다');
+}
 function doReset(){openConfirm('전체 초기화','모든 자리 배치, 참석확인, 메모를 초기화합니다.',async function(){allKeys().forEach(function(k){seatMap[k]=null;});checkMap={};memoMap={};await pushAll();render();showToast('초기화 완료');});}
 
 // 상태 표시
