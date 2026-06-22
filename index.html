@@ -265,29 +265,42 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
   .seat-panel{overflow:visible;padding:.4rem .3rem 80px}
   .unassigned-panel{display:none}
 
-  /* 자리 카드 - 모바일 최적화 */
-  .seat{height:60px;padding:3px 3px}
-  .seat-nm{font-size:.65rem;font-weight:600;line-height:1.2;-webkit-line-clamp:1}
-  .seat-og{font-size:.52rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .seat-key{font-size:.48rem}
+  /* 모바일: 행을 2줄씩 wrap해서 4열처럼 보이게 */
+  .seat-row{flex-wrap:wrap;gap:3px;margin-bottom:3px}
+  .row-id{width:100%;min-width:unset;font-size:.6rem;color:var(--gray);padding:4px 2px 1px;border-bottom:1px solid var(--border);margin-bottom:1px}
+  .row-grade-badge{font-size:.55rem}
+
+  /* 자리 카드 - 4열 기준 충분한 크기 */
+  .seat{flex:none;width:calc(25% - 3px);height:72px;padding:4px 3px}
+  .seat-nm{font-size:.68rem;font-weight:700;line-height:1.25;-webkit-line-clamp:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .seat-og{font-size:.54rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .seat-key{font-size:.5rem;top:1px;right:2px}
   .seat-check-icon{width:10px;height:10px}
   .seat-check-icon svg{width:6px;height:6px}
   .seat-memo-dot{width:4px;height:4px}
 
-  /* 행 간격 */
-  .seat-row{gap:2px;margin-bottom:2px}
-  .row-id{min-width:20px;font-size:.5rem}
-
   /* 상단 바 */
   .stats-bar .stat-n{font-size:.88rem}
   .stats-bar .stat-l{font-size:.55rem}
-  .legend{gap:5px;padding:.28rem .6rem}
-  .legend-item{font-size:.58rem}
+  .legend{gap:4px;padding:.25rem .5rem;flex-wrap:wrap}
+  .legend-item{font-size:.56rem}
   .legend-dot{width:6px;height:6px}
+  .legend-hint{display:none}
+
+  /* 탭 */
+  .tab{font-size:.65rem;padding:.5rem .2rem}
+  .tab svg{width:12px;height:12px}
 
   /* 하단 버튼 고정 */
-  .desk-actions{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:.38rem .45rem;background:var(--navy)}
-  .btn-act{font-size:.64rem;padding:.38rem .2rem}
+  .desk-actions{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:.35rem .4rem;background:var(--navy);border-top:1px solid var(--border)}
+  .btn-act{font-size:.62rem;padding:.35rem .15rem}
+
+  /* 가로 모드 */
+  @media(orientation:landscape){
+    .seat{width:calc(12.5% - 3px);height:64px}
+    .seat-nm{font-size:.6rem}
+    .seat-og{font-size:.48rem}
+  }
 }
 </style>
 </head>
@@ -737,6 +750,7 @@ function renderChart(){
         var tc=p?typeClass(p.type):'';
         var chk=pid&&checkMap[pid]?'is-checked':'';
         var hasPerson=pid?'has-person':'empty';
+        var titleText=p?(p.name+' / '+p.org):k;
         h+='<div class="seat '+tc+' '+chk+' '+hasPerson+' '+gradeClass+'" id="s-'+k+'"'+
            ' draggable="'+(pid?'true':'false')+'"'+
            ' ondragstart="dragStart(event,\''+k+'\')"'+
@@ -744,7 +758,7 @@ function renderChart(){
            ' ondragleave="dragLeave(event,\''+k+'\')"'+
            ' ondrop="dropToSeat(event,\''+k+'\')"'+
            ' onclick="seatClick(event,\''+k+'\')"'+
-           ' title="'+(p?p.name+' / '+p.org:k)+'">'+
+           ' title="'+titleText+'">'+
            '<span class="seat-key">'+k+'</span>'+
            (pid&&checkMap[pid]?'<span class="seat-check-icon"><svg viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#fff" stroke-width="2.5" fill="none"/></svg></span>':'')+
            (pid&&memoMap[pid]?'<span class="seat-memo-dot"></span>':'')+
