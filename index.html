@@ -62,7 +62,7 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
 .badge-vvip{background:rgba(246,201,14,.25);color:#f6c90e}
 .badge-vip-plus{background:rgba(251,146,60,.22);color:#fb923c}
 
-.seat{flex:1;min-width:0;height:62px;border-radius:7px;border:1px solid var(--border);background:var(--navy2);padding:4px 6px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;overflow:hidden;transition:border-color .1s,background .1s;user-select:none}
+.seat{flex:1;min-width:0;height:78px;border-radius:7px;border:1px solid var(--border);background:var(--navy2);padding:4px 6px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:relative;overflow:hidden;transition:border-color .1s,background .1s;user-select:none}
 .seat.has-person{cursor:pointer}
 .seat.empty{cursor:default}
 .seat.has-person:hover{border-color:var(--border2);background:var(--navy3)}
@@ -86,8 +86,8 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
 .seat-check-icon{position:absolute;top:2px;left:3px;width:12px;height:12px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .seat-check-icon svg{width:8px;height:8px;stroke:#fff;stroke-width:2.5;fill:none}
 .seat-memo-dot{position:absolute;bottom:2px;left:3px;width:5px;height:5px;background:var(--amber);border-radius:50%;pointer-events:none}
-.seat-nm{font-size:.82rem;font-weight:600;color:var(--cream);line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;pointer-events:none;text-align:center;width:100%}
-.seat-og{font-size:.7rem;color:var(--gray2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;pointer-events:none;text-align:center;width:100%}
+.seat-nm{font-size:.78rem;font-weight:600;color:var(--cream);line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;pointer-events:none;text-align:center;width:100%}
+.seat-og{font-size:.6rem;color:var(--gray2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;pointer-events:none;text-align:center;width:100%;display:block}
 
 /* 팝업 */
 #seat-popup{display:none;position:fixed;z-index:8000;background:var(--navy2);border:1px solid var(--border2);border-radius:10px;padding:6px;min-width:140px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
@@ -259,9 +259,20 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
 }
 @media(max-width:640px){
   .unassigned-panel{display:none}
-  .seat-panel{padding:.55rem .4rem 1rem}
-  .seat{height:54px}
-  .seat-og{display:none}
+  .seat-panel{padding:.55rem .3rem 1rem}
+  .seat{height:72px;padding:3px 4px}
+  .seat-nm{font-size:.68rem}
+  .seat-og{font-size:.55rem;display:block}
+  .row-id{min-width:22px;font-size:.52rem}
+  .seat-row{gap:2px;margin-bottom:2px}
+  body{overflow:auto;height:auto}
+  .view.on{overflow:visible;height:auto}
+  #desk-view.on{display:flex;flex-direction:column;min-height:100vh}
+  .desk-inner{flex-direction:column;overflow:visible}
+  .seat-panel{overflow:visible}
+  .desk-actions{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:.35rem .4rem}
+  .stats-bar .stat-n{font-size:.9rem}
+  .stats-bar .stat-l{font-size:.56rem}
 }
 </style>
 </head>
@@ -480,8 +491,8 @@ function parseSheetCSV(csv){
     // 역할이 없거나 유효하지 않으면 스킵 (헤더행·빈행·기타행 방어)
     var roleType=parseRole(role);
     if(roleType==='unassigned') continue;
-    // F열(cols[5]) = 소속 및 직위(국문), 줄바꿈을 공백으로
-    var org=(cols[5]||'').replace(/[\u200b\u00a0]/g,'').replace(/\s+/g,' ').trim();
+    // G열(cols[6]) = 소속 및 직위(국문) ← 배치번호 열 추가로 한 칸 밀림
+    var org=(cols[6]||'').replace(/[\u200b\u00a0]/g,'').replace(/\s+/g,' ').trim();
     // A열(cols[0]) = 구분 (종일/오전/오후)
     var session=(cols[0]||'').replace(/[\u200b\u00a0\s]/g,'');
     if(session!=='종일'&&session!=='오전'&&session!=='오후') session='';
