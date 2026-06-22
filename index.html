@@ -262,44 +262,44 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
   .view.on{overflow:visible;min-height:0;flex:none}
   #desk-view.on{display:flex;flex-direction:column}
   .desk-inner{flex-direction:column;overflow:visible;flex:none}
-  .seat-panel{overflow:visible;padding:.4rem .3rem 80px}
+  .seat-panel{overflow:visible;padding:.4rem .4rem 80px}
   .unassigned-panel{display:none}
 
-  /* 모바일: 행을 2줄씩 wrap해서 4열처럼 보이게 */
-  .seat-row{flex-wrap:wrap;gap:3px;margin-bottom:3px}
-  .row-id{width:100%;min-width:unset;font-size:.6rem;color:var(--gray);padding:4px 2px 1px;border-bottom:1px solid var(--border);margin-bottom:1px}
-  .row-grade-badge{font-size:.55rem}
+  /* 행 ID 별도 줄 */
+  .seat-row{flex-wrap:wrap;gap:5px;margin-bottom:4px}
+  .row-id{width:100%;min-width:unset;font-size:.65rem;color:var(--gray2);font-weight:600;padding:5px 2px 2px;border-bottom:1px solid var(--border);margin-bottom:2px}
+  .row-grade-badge{font-size:.6rem}
 
-  /* 자리 카드 - 4열 기준 충분한 크기 */
-  .seat{flex:none;width:calc(25% - 3px);height:72px;padding:4px 3px}
-  .seat-nm{font-size:.68rem;font-weight:700;line-height:1.25;-webkit-line-clamp:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .seat-og{font-size:.54rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-  .seat-key{font-size:.5rem;top:1px;right:2px}
-  .seat-check-icon{width:10px;height:10px}
-  .seat-check-icon svg{width:6px;height:6px}
-  .seat-memo-dot{width:4px;height:4px}
+  /* 자리 카드 - 2열 */
+  .seat{flex:none;width:calc(50% - 3px);height:80px;padding:6px 8px;align-items:flex-start;text-align:left}
+  .seat-nm{font-size:.82rem;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-line-clamp:1;text-align:left}
+  .seat-og{font-size:.66rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;text-align:left}
+  .seat-key{font-size:.54rem;top:3px;right:5px}
+  .seat-check-icon{width:12px;height:12px;top:3px;left:4px}
+  .seat-check-icon svg{width:7px;height:7px}
+  .seat-memo-dot{width:5px;height:5px;bottom:3px;left:4px}
 
   /* 상단 바 */
-  .stats-bar .stat-n{font-size:.88rem}
-  .stats-bar .stat-l{font-size:.55rem}
-  .legend{gap:4px;padding:.25rem .5rem;flex-wrap:wrap}
-  .legend-item{font-size:.56rem}
+  .stats-bar .stat-n{font-size:.92rem}
+  .stats-bar .stat-l{font-size:.58rem}
+  .legend{gap:5px;padding:.28rem .6rem;flex-wrap:wrap}
+  .legend-item{font-size:.6rem}
   .legend-dot{width:6px;height:6px}
   .legend-hint{display:none}
 
   /* 탭 */
-  .tab{font-size:.65rem;padding:.5rem .2rem}
+  .tab{font-size:.68rem;padding:.5rem .2rem}
   .tab svg{width:12px;height:12px}
 
   /* 하단 버튼 고정 */
-  .desk-actions{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:.35rem .4rem;background:var(--navy);border-top:1px solid var(--border)}
-  .btn-act{font-size:.62rem;padding:.35rem .15rem}
+  .desk-actions{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:.38rem .45rem;background:var(--navy);border-top:1px solid var(--border)}
+  .btn-act{font-size:.65rem;padding:.38rem .2rem}
 
-  /* 가로 모드 */
+  /* 가로 모드 - 3열 */
   @media(orientation:landscape){
-    .seat{width:calc(12.5% - 3px);height:64px}
-    .seat-nm{font-size:.6rem}
-    .seat-og{font-size:.48rem}
+    .seat{width:calc(33.33% - 4px);height:72px}
+    .seat-nm{font-size:.75rem}
+    .seat-og{font-size:.6rem}
   }
 }
 </style>
