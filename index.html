@@ -258,21 +258,36 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
   .print-cell-name{color:#111}.print-cell-org{color:#555}
 }
 @media(max-width:640px){
+  body{overflow:auto;height:auto;min-height:100vh}
+  .view.on{overflow:visible;min-height:0;flex:none}
+  #desk-view.on{display:flex;flex-direction:column}
+  .desk-inner{flex-direction:column;overflow:visible;flex:none}
+  .seat-panel{overflow:visible;padding:.4rem .3rem 80px}
   .unassigned-panel{display:none}
-  .seat-panel{padding:.55rem .3rem 1rem}
-  .seat{height:72px;padding:3px 4px}
-  .seat-nm{font-size:.68rem}
-  .seat-og{font-size:.55rem;display:block}
-  .row-id{min-width:22px;font-size:.52rem}
+
+  /* 자리 카드 - 모바일 최적화 */
+  .seat{height:60px;padding:3px 3px}
+  .seat-nm{font-size:.65rem;font-weight:600;line-height:1.2;-webkit-line-clamp:1}
+  .seat-og{font-size:.52rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .seat-key{font-size:.48rem}
+  .seat-check-icon{width:10px;height:10px}
+  .seat-check-icon svg{width:6px;height:6px}
+  .seat-memo-dot{width:4px;height:4px}
+
+  /* 행 간격 */
   .seat-row{gap:2px;margin-bottom:2px}
-  body{overflow:auto;height:auto}
-  .view.on{overflow:visible;height:auto}
-  #desk-view.on{display:flex;flex-direction:column;min-height:100vh}
-  .desk-inner{flex-direction:column;overflow:visible}
-  .seat-panel{overflow:visible}
-  .desk-actions{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:.35rem .4rem}
-  .stats-bar .stat-n{font-size:.9rem}
-  .stats-bar .stat-l{font-size:.56rem}
+  .row-id{min-width:20px;font-size:.5rem}
+
+  /* 상단 바 */
+  .stats-bar .stat-n{font-size:.88rem}
+  .stats-bar .stat-l{font-size:.55rem}
+  .legend{gap:5px;padding:.28rem .6rem}
+  .legend-item{font-size:.58rem}
+  .legend-dot{width:6px;height:6px}
+
+  /* 하단 버튼 고정 */
+  .desk-actions{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:.38rem .45rem;background:var(--navy)}
+  .btn-act{font-size:.64rem;padding:.38rem .2rem}
 }
 </style>
 </head>
@@ -628,18 +643,19 @@ function getZoneDesc(key){
   return (row.startsWith('A')?'A구역(앞)':'B구역(뒤)')+' '+parseInt(row.slice(1))+'행 '+parseInt(key.split('-')[1])+'번';
 }
 function seatBadge(p){
+  var bs='display:inline-block;font-size:.48rem;font-weight:700;padding:0 3px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6';
   var roleBadge='';
   var t=p.type||'';
-  if(t==='speaker')    roleBadge='<span style="display:inline-block;background:rgba(244,114,182,.25);color:#f472b6;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">연사</span>';
-  else if(t==='vvip')  roleBadge='<span style="display:inline-block;background:rgba(255,107,107,.3);color:#ff6b6b;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">VVIP</span>';
-  else if(t==='vip')   roleBadge='<span style="display:inline-block;background:rgba(99,102,241,.25);color:#818cf8;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">VIP</span>';
-  else if(t==='org')   roleBadge='<span style="display:inline-block;background:rgba(45,212,191,.22);color:#2dd4bf;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">주최</span>';
-  else if(t==='unassigned') roleBadge='<span style="display:inline-block;background:rgba(173,181,198,.22);color:#adb5c6;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">미배정</span>';
+  if(t==='speaker')    roleBadge='<span style="'+bs+';background:rgba(244,114,182,.25);color:#f472b6">연사</span>';
+  else if(t==='vvip')  roleBadge='<span style="'+bs+';background:rgba(255,107,107,.3);color:#ff6b6b">VVIP</span>';
+  else if(t==='vip')   roleBadge='<span style="'+bs+';background:rgba(99,102,241,.25);color:#818cf8">VIP</span>';
+  else if(t==='org')   roleBadge='<span style="'+bs+';background:rgba(45,212,191,.22);color:#2dd4bf">주최</span>';
+  else if(t==='unassigned') roleBadge='<span style="'+bs+';background:rgba(173,181,198,.22);color:#adb5c6">미배정</span>';
   var sessBadge='';
   var s=p.session||'';
-  if(s==='오전')       sessBadge='<span style="display:inline-block;background:rgba(59,130,246,.22);color:#60a5fa;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">오전</span>';
-  else if(s==='오후')  sessBadge='<span style="display:inline-block;background:rgba(251,191,36,.22);color:#fbbf24;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">오후</span>';
-  else if(s==='종일')  sessBadge='<span style="display:inline-block;background:rgba(52,211,153,.18);color:#34d399;font-size:.52rem;font-weight:700;padding:0 4px;border-radius:3px;margin-right:2px;vertical-align:1px;line-height:1.6">종일</span>';
+  if(s==='오전')      sessBadge='<span style="'+bs+';background:rgba(59,130,246,.22);color:#60a5fa">오전</span>';
+  else if(s==='오후') sessBadge='<span style="'+bs+';background:rgba(251,191,36,.22);color:#fbbf24">오후</span>';
+  else if(s==='종일') sessBadge='<span style="'+bs+';background:rgba(52,211,153,.18);color:#34d399">종일</span>';
   return '<span class="seat-nm">'+roleBadge+sessBadge+p.name+'</span><span class="seat-og">'+p.org+'</span>';
 }
 
