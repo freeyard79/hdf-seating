@@ -265,42 +265,39 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;ba
   .seat-panel{overflow:visible;padding:.4rem .4rem 80px}
   .unassigned-panel{display:none}
 
-  /* 행 ID 별도 줄 */
-  .seat-row{flex-wrap:wrap;gap:5px;margin-bottom:4px}
-  .row-id{width:100%;min-width:unset;font-size:.65rem;color:var(--gray2);font-weight:600;padding:5px 2px 2px;border-bottom:1px solid var(--border);margin-bottom:2px}
-  .row-grade-badge{font-size:.6rem}
+  /* 행: grid 2열 강제 */
+  .seat-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;margin-bottom:6px!important;flex-wrap:unset}
+  .row-id{grid-column:1/-1;font-size:.68rem;color:var(--gray2);font-weight:600;padding:5px 2px 3px;border-bottom:1px solid var(--border);margin-bottom:0;min-width:unset;text-align:left}
+  .row-grade-badge{font-size:.62rem}
 
-  /* 자리 카드 - 2열 */
-  .seat{flex:none;width:calc(50% - 3px);height:80px;padding:6px 8px;align-items:flex-start;text-align:left}
-  .seat-nm{font-size:.82rem;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-line-clamp:1;text-align:left}
-  .seat-og{font-size:.66rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;text-align:left}
-  .seat-key{font-size:.54rem;top:3px;right:5px}
+  /* 자리 카드 */
+  .seat{width:100%!important;height:auto!important;min-height:90px!important;padding:6px 8px 8px!important;align-items:flex-start!important;text-align:left!important;flex:unset!important;box-sizing:border-box!important}
+  .seat-nm{font-size:.84rem!important;font-weight:700!important;line-height:1.3!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;display:block!important;text-align:left!important;-webkit-line-clamp:unset!important}
+  .seat-og{font-size:.67rem!important;display:block!important;visibility:visible!important;opacity:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;margin-top:4px!important;text-align:left!important;color:#a0aec0!important;width:100%!important;max-width:100%!important}
+  .seat-key{font-size:.55rem;top:3px;right:5px}
   .seat-check-icon{width:12px;height:12px;top:3px;left:4px}
   .seat-check-icon svg{width:7px;height:7px}
   .seat-memo-dot{width:5px;height:5px;bottom:3px;left:4px}
 
-  /* 상단 바 */
+  /* 상단 */
   .stats-bar .stat-n{font-size:.92rem}
   .stats-bar .stat-l{font-size:.58rem}
   .legend{gap:5px;padding:.28rem .6rem;flex-wrap:wrap}
   .legend-item{font-size:.6rem}
   .legend-dot{width:6px;height:6px}
   .legend-hint{display:none}
-
-  /* 탭 */
   .tab{font-size:.68rem;padding:.5rem .2rem}
   .tab svg{width:12px;height:12px}
 
   /* 하단 버튼 고정 */
   .desk-actions{position:fixed;bottom:0;left:0;right:0;z-index:200;padding:.38rem .45rem;background:var(--navy);border-top:1px solid var(--border)}
   .btn-act{font-size:.65rem;padding:.38rem .2rem}
-
-  /* 가로 모드 - 3열 */
-  @media(orientation:landscape){
-    .seat{width:calc(33.33% - 4px);height:72px}
-    .seat-nm{font-size:.75rem}
-    .seat-og{font-size:.6rem}
-  }
+}
+@media(max-width:640px) and (orientation:landscape){
+  .seat-row{grid-template-columns:1fr 1fr 1fr!important}
+  .seat{height:70px!important}
+  .seat-nm{font-size:.76rem!important}
+  .seat-og{font-size:.6rem!important}
 }
 </style>
 </head>
@@ -507,22 +504,36 @@ function parseSheetCSV(csv){
   }
   if(field||cur.length){cur.push(field);rows.push(cur);}
 
+  // 헤더행(row 0)에서 각 컬럼 인덱스를 이름으로 찾기 (열 순서 변경에 무관)
+  var headerRow=rows[0]||[];
+  var iSession=-1, iRole=-1, iName=-1, iOrg=-1;
+  for(var c=0;c<headerRow.length;c++){
+    var h=(headerRow[c]||'').replace(/[\u200b\u00a0\u200c\u200d\ufeff\s]/g,'');
+    if(h==='구분') iSession=c;
+    if(h==='역할') iRole=c;
+    if(h==='성명(국문)') iName=c;
+    if(h==='소속및직위(국문)') iOrg=c;
+  }
+  // 헤더를 못 찾으면 과거 고정 인덱스 폴백
+  if(iSession<0) iSession=0;
+  if(iRole<0)    iRole=1;
+  if(iName<0)    iName=2;
+  if(iOrg<0)     iOrg=6;
+
   var people=[],idx=1;
   for(var r=1;r<rows.length;r++){
     var cols=rows[r];
-    // C열(cols[2]) = 성명(국문)
-    var name=(cols[2]||'').replace(/[\u200b\u00a0\u200c\u200d\ufeff]/g,'').trim();
-    // 이름이 없으면 무조건 스킵
+    // 성명(국문)
+    var name=(cols[iName]||'').replace(/[\u200b\u00a0\u200c\u200d\ufeff]/g,'').trim();
     if(!name) continue;
-    // B열(cols[1]) = 역할
-    var role=(cols[1]||'').trim();
-    // 역할이 없거나 유효하지 않으면 스킵 (헤더행·빈행·기타행 방어)
+    // 역할
+    var role=(cols[iRole]||'').trim();
     var roleType=parseRole(role);
     if(roleType==='unassigned') continue;
-    // G열(cols[6]) = 소속 및 직위(국문) ← 배치번호 열 추가로 한 칸 밀림
-    var org=(cols[6]||'').replace(/[\u200b\u00a0]/g,'').replace(/\s+/g,' ').trim();
-    // A열(cols[0]) = 구분 (종일/오전/오후)
-    var session=(cols[0]||'').replace(/[\u200b\u00a0\s]/g,'');
+    // 소속 및 직위(국문)
+    var org=(cols[iOrg]||'').replace(/[\u200b\u00a0]/g,'').replace(/\s+/g,' ').trim();
+    // 구분 (종일/오전/오후)
+    var session=(cols[iSession]||'').replace(/[\u200b\u00a0\s]/g,'');
     if(session!=='종일'&&session!=='오전'&&session!=='오후') session='';
     people.push({id:'p'+idx, name:name, org:org, type:roleType, session:session});
     idx++;
